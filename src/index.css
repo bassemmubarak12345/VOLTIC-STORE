@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8c96d;
+    --gold-dark: #9a7830;
+    --gold-glow: rgba(201, 168, 76, 0.35);
+
+    /* Default Dark Theme variables directly on root */
+    --bg-page: #0a0a0a;
+    --bg-header: rgba(10, 10, 10, 0.96);
+    --bg-card: #141414;
+    --bg-card-elevated: #1e1e1e;
+    --bg-strip: #121212;
+    --text-main: #ffffff;
+    --text-muted: #b3b3b3;
+    --border-gold: rgba(201, 168, 76, 0.22);
+    --border-gold-strong: rgba(201, 168, 76, 0.6);
+    --modal-overlay: rgba(0, 0, 0, 0.82);
+    --bottom-nav-bg: rgba(15, 15, 15, 0.97);
+  }
+
+  /* Dark Theme */
+  body.theme-dark, html.dark {
+    --bg-page: #0a0a0a;
+    --bg-header: rgba(10, 10, 10, 0.96);
+    --bg-card: #141414;
+    --bg-card-elevated: #1e1e1e;
+    --bg-strip: #121212;
+    --text-main: #ffffff;
+    --text-muted: #b3b3b3;
+    --border-gold: rgba(201, 168, 76, 0.22);
+    --border-gold-strong: rgba(201, 168, 76, 0.6);
+    --modal-overlay: rgba(0, 0, 0, 0.82);
+    --bottom-nav-bg: rgba(15, 15, 15, 0.97);
+  }
+
+  /* Light Theme */
+  body.theme-light {
+    --bg-page: #f8f6f0;
+    --bg-header: rgba(248, 246, 240, 0.96);
+    --bg-card: #ffffff;
+    --bg-card-elevated: #f2eee3;
+    --bg-strip: #eee9dc;
+    --text-main: #14120e;
+    --text-muted: #5e574d;
+    --border-gold: rgba(201, 168, 76, 0.35);
+    --border-gold-strong: rgba(154, 120, 48, 0.8);
+    --modal-overlay: rgba(20, 18, 14, 0.75);
+    --bottom-nav-bg: rgba(255, 255, 255, 0.97);
+  }
+}
+
+body {
+  font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar - Neutral & Subtle */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(160, 160, 160, 0.25);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 160, 160, 0.45);
+}
+
+/* Hide scrollbar for category horizontal scroll but keep it functional */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Golden text gradient */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #e8c96d 0%, #c9a84c 50%, #9a7830 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gold border gradient */
+.border-gold-subtle {
+  border-color: var(--border-gold);
+}
+
+/* Floating animation */
+@keyframes floatGentle {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float-gentle {
+  animation: floatGentle 4s ease-in-out infinite;
+}
+
+/* Pulse animation for WhatsApp */
+@keyframes pulseWa {
+  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.55); }
+  70% { box-shadow: 0 0 0 16px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+
+.pulse-whatsapp {
+  animation: pulseWa 2.4s infinite;
+}
+
+/* Continuous Waterwheel (ساقية مستمرة تتحرك من الشمال إلى اليمين بسلاسة وبدون أي توقف) */
+@keyframes waterwheelLoop {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.waterwheel-track {
+  display: flex;
+  width: max-content;
+  animation: waterwheelLoop 48s linear infinite;
+  will-change: transform;
+}
+

@@ -1,0 +1,6 @@
+{
+  "name": "VOLTIC Fragrances",
+  "description": "متجر VOLTIC للعطور الرجالية الفاخرة - VOLTIC Luxury Men's Fragrances",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
