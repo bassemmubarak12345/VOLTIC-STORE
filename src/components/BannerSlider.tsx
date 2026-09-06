@@ -37,16 +37,36 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
   const [isPaused, setIsPaused] = useState(false);
   const [failedImageIds, setFailedImageIds] = useState<Record<string, boolean>>({});
 
-  // Fallback handler for GitHub banners (e.g. /banners/banner-1.jpg -> /banner-1.jpg -> exclude if not uploaded)
+  // Fallback handler for GitHub banners with multi-extension and path fallbacks
   const handleImageError = useCallback(
-    (bannerId: string, currentSrc: string, fallbackSrc?: string) => {
-      if (fallbackSrc && currentSrc !== fallbackSrc) {
-        setBannersList((prev) =>
-          prev.map((b) => (b.id === bannerId ? { ...b, image: fallbackSrc } : b))
-        );
-      } else {
-        setFailedImageIds((prev) => ({ ...prev, [bannerId]: true }));
-      }
+    (bannerId: string, currentSrc: string) => {
+      // Try alternative extensions or paths before marking as failed
+      setBannersList((prev) =>
+        prev.map((b) => {
+          if (b.id !== bannerId) return b;
+
+          const rawUrl = currentSrc.split('?')[0];
+          const query = currentSrc.includes('?') ? '?' + currentSrc.split('?')[1] : '';
+
+          if (rawUrl.startsWith('/banners/banner-') && rawUrl.endsWith('.jpg')) {
+            // Try without /banners/ prefix
+            return { ...b, image: rawUrl.replace('/banners/', '/') + query };
+          } else if (rawUrl.endsWith('.jpg')) {
+            // Try .png
+            return { ...b, image: rawUrl.replace('.jpg', '.png') + query };
+          } else if (rawUrl.endsWith('.png')) {
+            // Try .jpeg
+            return { ...b, image: rawUrl.replace('.png', '.jpeg') + query };
+          } else if (rawUrl.endsWith('.jpeg')) {
+            // Try .webp
+            return { ...b, image: rawUrl.replace('.jpeg', '.webp') + query };
+          }
+
+          // If all fallbacks exhausted, mark as failed
+          setFailedImageIds((failed) => ({ ...failed, [bannerId]: true }));
+          return b;
+        })
+      );
     },
     []
   );
@@ -249,7 +269,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                     loading={index === 0 ? 'eager' : 'lazy'}
                     decoding={index === 0 ? 'sync' : 'async'}
                     referrerPolicy="no-referrer"
-                    onError={() => handleImageError(bannerId, banner.image, banner.fallbackImage)}
+                    onError={() => handleImageError(bannerId, banner.image)}
                     onClick={() => {
                       if (banner.category && onSelectCategory) {
                         onSelectCategory(banner.category);
