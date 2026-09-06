@@ -225,10 +225,10 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
           100% PURE: Absolutely NO Add button, NO Delete button, NO control overlays!
           ========================================================================= */}
       {hasBanners ? (
-        /* Light subtle frame around banner */
-        <div className="relative w-full p-1 sm:p-1.5 rounded-2xl sm:rounded-3xl border border-white/20 sm:border-white/25 ring-1 ring-white/10 shadow-2xl bg-black/40 backdrop-blur-xs overflow-hidden">
-          {/* Banner Images with Silky Smooth Crossfade and Inner Framing */}
-          <div className="relative w-full rounded-xl sm:rounded-2xl overflow-hidden border border-white/10">
+        /* Subtle soft gold border directly on the edge of the banner images */
+        <div className="relative w-full rounded-xl sm:rounded-2xl border border-[#c9a84c]/35 shadow-xl bg-black/40 overflow-hidden">
+          {/* Banner Images with Silky Smooth Crossfade */}
+          <div className="relative w-full overflow-hidden">
             {activeBanners.map((banner, index) => {
               const isActive = index === currentIndex;
               const bannerId = banner.id || `banner-${index}`;
@@ -245,7 +245,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                   <img
                     src={banner.image}
                     alt={isRtl ? banner.altAr : banner.altEn}
-                    className="w-full h-auto object-contain block mx-auto rounded-xl sm:rounded-2xl cursor-pointer"
+                    className="w-full h-auto object-contain block mx-auto cursor-pointer"
                     loading={index === 0 ? 'eager' : 'lazy'}
                     decoding={index === 0 ? 'sync' : 'async'}
                     referrerPolicy="no-referrer"
