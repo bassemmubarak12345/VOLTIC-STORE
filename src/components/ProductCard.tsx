@@ -52,28 +52,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Gradient shadow overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
 
-        {/* Hover action overlay */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-4 z-20">
+        {/* Hover/Tap action overlay: Opens full product details modal so user can adjust quantity, promo, and view specs before adding */}
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-4 z-20 pointer-events-auto">
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToCart(product, e);
-            }}
-            className="w-full max-w-[180px] py-2.5 px-4 rounded bg-gradient-to-r from-[#e8c96d] via-[#c9a84c] to-[#9a7830] text-black font-extrabold text-xs tracking-wider flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-lg"
-          >
-            <ShoppingBag className="w-4 h-4" />
-            <span>{t.addToCart}</span>
-          </button>
-
-          <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onOpenQuickView(product);
             }}
-            className="w-full max-w-[180px] py-2 px-4 rounded border border-[#c9a84c] text-[#e8c96d] bg-black/50 backdrop-blur-xs font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#c9a84c]/20 transition-all"
+            className="w-full max-w-[190px] py-2.5 px-4 rounded bg-gradient-to-r from-[#e8c96d] via-[#c9a84c] to-[#9a7830] text-black font-extrabold text-xs tracking-wider flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-lg cursor-pointer"
           >
-            <Eye className="w-3.5 h-3.5" />
-            <span>{t.quickView}</span>
+            <Eye className="w-4 h-4" />
+            <span>{isRtl ? 'عرض التفاصيل والطلب' : 'View Details & Order'}</span>
           </button>
         </div>
       </div>

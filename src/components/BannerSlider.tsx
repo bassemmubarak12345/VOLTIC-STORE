@@ -20,31 +20,36 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
 }) => {
   const isRtl = language === 'ar';
 
-  // Load uploaded banners from localStorage or propBanners
+  // Load banners: exactly the 3 banners provided in DEFAULT_BANNERS
   const [bannersList, setBannersList] = useState<BannerItem[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Exclude any old demo pexels images
-          const valid = parsed.filter(
-            (b) => typeof b.image === 'string' && !b.image.includes('pexels')
-          );
-          if (valid.length > 0) return valid;
-        }
-      }
-    } catch {
-      // Ignore
-    }
-
-    const validProps = propBanners.filter((b) => Boolean(b.image && b.image.trim()));
-    return validProps;
+    return propBanners.filter((b) => Boolean(b.image && b.image.trim()));
   });
+
+  // Keep banners list strictly in sync with propBanners
+  useEffect(() => {
+    if (propBanners && propBanners.length > 0) {
+      setBannersList(propBanners.filter((b) => Boolean(b.image && b.image.trim())));
+      setFailedImageIds({});
+    }
+  }, [propBanners]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [failedImageIds, setFailedImageIds] = useState<Record<string, boolean>>({});
+
+  // Fallback handler for GitHub banners (e.g. /banners/banner-1.jpg -> /banner-1.jpg -> exclude if not uploaded)
+  const handleImageError = useCallback(
+    (bannerId: string, currentSrc: string, fallbackSrc?: string) => {
+      if (fallbackSrc && currentSrc !== fallbackSrc) {
+        setBannersList((prev) =>
+          prev.map((b) => (b.id === bannerId ? { ...b, image: fallbackSrc } : b))
+        );
+      } else {
+        setFailedImageIds((prev) => ({ ...prev, [bannerId]: true }));
+      }
+    },
+    []
+  );
 
   // Optional direct link input in empty state
   const [urlInput, setUrlInput] = useState('');
@@ -220,9 +225,10 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
           100% PURE: Absolutely NO Add button, NO Delete button, NO control overlays!
           ========================================================================= */}
       {hasBanners ? (
-        <div className="relative w-full rounded-xl sm:rounded-2xl border border-[#c9a84c]/25 shadow-2xl bg-black/60 overflow-hidden">
-          {/* Banner Images with Silky Smooth Crossfade */}
-          <div className="relative w-full">
+        /* Light subtle frame around banner */
+        <div className="relative w-full p-1 sm:p-1.5 rounded-2xl sm:rounded-3xl border border-white/20 sm:border-white/25 ring-1 ring-white/10 shadow-2xl bg-black/40 backdrop-blur-xs overflow-hidden">
+          {/* Banner Images with Silky Smooth Crossfade and Inner Framing */}
+          <div className="relative w-full rounded-xl sm:rounded-2xl overflow-hidden border border-white/10">
             {activeBanners.map((banner, index) => {
               const isActive = index === currentIndex;
               const bannerId = banner.id || `banner-${index}`;
@@ -243,7 +249,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                     loading={index === 0 ? 'eager' : 'lazy'}
                     decoding={index === 0 ? 'sync' : 'async'}
                     referrerPolicy="no-referrer"
-                    onError={() => setFailedImageIds((prev) => ({ ...prev, [bannerId]: true }))}
+                    onError={() => handleImageError(bannerId, banner.image, banner.fallbackImage)}
                     onClick={() => {
                       if (banner.category && onSelectCategory) {
                         onSelectCategory(banner.category);

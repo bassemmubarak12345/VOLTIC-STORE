@@ -389,24 +389,15 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                           </div>
 
                           <button
-                            onClick={(e) => handleAddWithFeedback(product, e)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                              isJustAdded
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-gradient-to-r from-[#e8c96d] to-[#9a7830] text-black hover:brightness-110 active:scale-95 shadow-md'
-                            }`}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectProduct(product);
+                            }}
+                            className="px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer bg-gradient-to-r from-[#e8c96d] to-[#9a7830] text-black hover:brightness-110 active:scale-95 shadow-md"
                           >
-                            {isJustAdded ? (
-                              <>
-                                <Check className="w-3.5 h-3.5" />
-                                <span>{isRtl ? 'تمت' : 'Added'}</span>
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingBag className="w-3.5 h-3.5" />
-                                <span>{isRtl ? 'أضف' : 'Add'}</span>
-                              </>
-                            )}
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>{isRtl ? 'التفاصيل والطلب' : 'Details & Order'}</span>
                           </button>
                         </div>
                       </div>
@@ -536,38 +527,17 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                         </div>
 
                         <div className="flex items-center gap-1.5">
-                          {/* Quick View Button */}
+                          {/* Open Details Button */}
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleSelectProduct(product);
                             }}
-                            className="p-2 rounded-xl border border-[#c9a84c]/30 text-gray-300 hover:text-[#c9a84c] hover:border-[#c9a84c] hover:bg-[#c9a84c]/10 transition-all cursor-pointer"
-                            title={isRtl ? 'عرض التفاصيل' : 'View Details'}
+                            className="px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer bg-gradient-to-r from-[#e8c96d] to-[#9a7830] text-black hover:brightness-110 active:scale-95 shadow-md"
                           >
                             <Eye className="w-4 h-4" />
-                          </button>
-
-                          {/* Add to Cart Button */}
-                          <button
-                            onClick={(e) => handleAddWithFeedback(product, e)}
-                            className={`px-3 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                              isJustAdded
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-gradient-to-r from-[#e8c96d] to-[#9a7830] text-black hover:brightness-110 active:scale-95 shadow-md'
-                            }`}
-                          >
-                            {isJustAdded ? (
-                              <>
-                                <Check className="w-3.5 h-3.5" />
-                                <span className="hidden xs:inline">{isRtl ? 'تمت' : 'Added'}</span>
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingBag className="w-3.5 h-3.5" />
-                                <span className="hidden xs:inline">{isRtl ? 'أضف' : 'Add'}</span>
-                              </>
-                            )}
+                            <span>{isRtl ? 'التفاصيل والطلب' : 'Details & Order'}</span>
                           </button>
                         </div>
                       </div>
