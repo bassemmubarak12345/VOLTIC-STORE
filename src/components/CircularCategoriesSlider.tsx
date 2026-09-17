@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles } from 'lucide-react';
+import { Compass } from 'lucide-react';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../data/translations';
 import { CATEGORIES_DATA } from '../data/products';
@@ -100,7 +100,7 @@ export const CircularCategoriesSlider: React.FC<CircularCategoriesSliderProps> =
       {/* Header with Title and Royal Sparkle Accent */}
       <div className="flex items-center justify-start mb-2 sm:mb-2.5">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#c9a84c]" />
+          <Compass className="w-4 h-4 text-[#c9a84c]" />
           <h3 className="text-sm sm:text-base md:text-lg font-black tracking-wide text-[var(--text-main)]">
             {t.categoriesSliderTitle}
           </h3>

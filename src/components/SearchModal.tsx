@@ -4,7 +4,6 @@ import {
   X,
   ShoppingBag,
   Eye,
-  Sparkles,
   Check,
   Flame,
   ArrowRight,
@@ -196,7 +195,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           {/* Brand & Subtitle */}
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-[#c9a84c]/15 border border-[#c9a84c]/40 flex items-center justify-center text-[#c9a84c]">
-              <Sparkles className="w-4 h-4" />
+              <Compass className="w-4 h-4" />
             </div>
             <div>
               <span className="text-xs sm:text-sm font-black tracking-widest text-[#c9a84c] uppercase block">
@@ -325,7 +324,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#c9a84c]" />
+                  <Compass className="w-4 h-4 text-[#c9a84c]" />
                   <h3 className="text-base sm:text-lg font-black text-white">
                     {isRtl ? 'عطور مختارة وموصى بها لك' : 'Featured & Best Seller Perfumes'}
                   </h3>
