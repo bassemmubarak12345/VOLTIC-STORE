@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Upload, Image as ImageIcon, Link as LinkIcon, Plus } from 'lucide-react';
+import { Upload, Image as ImageIcon, Link as LinkIcon, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import { Language } from '../types';
 import { DEFAULT_BANNERS, BannerItem } from '../data/banners';
 
@@ -36,6 +36,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [failedImageIds, setFailedImageIds] = useState<Record<string, boolean>>({});
+  const [showControls, setShowControls] = useState(true);
 
   // Fallback handler for GitHub banners with multi-extension and path fallbacks
   const handleImageError = useCallback(
@@ -136,7 +137,7 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
 
         loadedCount++;
         if (loadedCount === fileList.length) {
-          saveBanners(newItems);
+          saveBanners([...bannersList, ...newItems]);
         }
       };
       reader.readAsDataURL(file);
@@ -168,8 +169,23 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
       category: 'summer',
     };
 
-    saveBanners([newBanner]);
+    saveBanners([...bannersList, newBanner]);
     setUrlInput('');
+  };
+
+  // Delete current active banner
+  const handleDeleteCurrentBanner = () => {
+    if (!activeBanners || activeBanners.length === 0) return;
+    const currentBanner = activeBanners[currentIndex];
+    if (!currentBanner) return;
+
+    const updated = bannersList.filter((b) => b.id !== currentBanner.id);
+    saveBanners(updated);
+    if (currentIndex >= updated.length && updated.length > 0) {
+      setCurrentIndex(updated.length - 1);
+    } else {
+      setCurrentIndex(0);
+    }
   };
 
   // Slide navigation
@@ -239,6 +255,52 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
         className="hidden"
         id="banner-file-input"
       />
+
+      {/* 3 Control Buttons: Add Banner, Delete Banner, Finish & Hide Buttons */}
+      {showControls && (
+        <div
+          id="banner-admin-controls-bar"
+          className="mb-3 flex items-center justify-center gap-2 sm:gap-3 flex-wrap bg-[#141414]/90 backdrop-blur-md p-2 sm:p-2.5 rounded-xl border border-[#c9a84c]/40 shadow-xl"
+        >
+          {/* Button 1: Add Banner */}
+          <button
+            id="add-banner-control-btn"
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-gradient-to-r from-[#e8c96d] via-[#c9a84c] to-[#9a7830] text-black font-black text-xs sm:text-sm flex items-center gap-1.5 hover:brightness-110 active:scale-95 transition-all cursor-pointer shadow-md"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{isRtl ? 'إضافة بنر' : 'Add Banner'}</span>
+          </button>
+
+          {/* Button 2: Delete Banner */}
+          <button
+            id="delete-banner-control-btn"
+            type="button"
+            onClick={handleDeleteCurrentBanner}
+            disabled={!hasBanners}
+            className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg font-black text-xs sm:text-sm flex items-center gap-1.5 transition-all active:scale-95 shadow-md ${
+              hasBanners
+                ? 'bg-red-600 hover:bg-red-500 text-white cursor-pointer border border-red-500/30'
+                : 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700/40'
+            }`}
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>{isRtl ? 'حذف البنر' : 'Delete Banner'}</span>
+          </button>
+
+          {/* Button 3: Finish & Remove All 3 Buttons */}
+          <button
+            id="finish-banners-control-btn"
+            type="button"
+            onClick={() => setShowControls(false)}
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md border border-emerald-400/30"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>{isRtl ? 'إنهاء وإخفاء الأزرار' : 'Done & Hide Controls'}</span>
+          </button>
+        </div>
+      )}
 
       {/* =========================================================================
           VIEW A: BANNERS ARE LOADED
