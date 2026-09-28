@@ -11,26 +11,26 @@ export interface BannerItem {
 export const DEFAULT_BANNERS: BannerItem[] = [
   {
     "id": "banner-1",
-    "image": "/banners/banner-1.jpg?v=1788695388663",
-    "fallbackImage": "/banner-1.jpg?v=1788695388663",
-    "altAr": "VOLTIC بنر 1",
-    "altEn": "VOLTIC Banner 1",
+    "image": "/banners/banner-1.jpg",
+    "fallbackImage": "/banner-1.jpg",
+    "altAr": "عطور صيفية - VOLTIC",
+    "altEn": "VOLTIC Summer Fragrances",
     "category": "summer"
   },
   {
     "id": "banner-2",
-    "image": "/banners/banner-2.jpg?v=1788695388663",
-    "fallbackImage": "/banner-2.jpg?v=1788695388663",
-    "altAr": "VOLTIC بنر 2",
-    "altEn": "VOLTIC Banner 2",
+    "image": "/banners/banner-2.jpg",
+    "fallbackImage": "/banner-2.jpg",
+    "altAr": "عطور شتوية - VOLTIC",
+    "altEn": "VOLTIC Winter Fragrances",
     "category": "winter"
   },
   {
     "id": "banner-3",
-    "image": "/banners/banner-3.jpg?v=1788695388663",
-    "fallbackImage": "/banner-3.jpg?v=1788695388663",
-    "altAr": "VOLTIC بنر 3",
-    "altEn": "VOLTIC Banner 3",
+    "image": "/banners/banner-3.jpg",
+    "fallbackImage": "/banner-3.jpg",
+    "altAr": "عطور المناسبات - VOLTIC",
+    "altEn": "VOLTIC Occasions Fragrances",
     "category": "occasions"
   }
 ];
