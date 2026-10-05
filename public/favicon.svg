@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGlow" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#181611"/>
+      <stop offset="55%" stop-color="#0c0b09"/>
+      <stop offset="100%" stop-color="#040404"/>
+    </radialGradient>
+
+    <!-- Metallic Gold Rim -->
+    <linearGradient id="goldRim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdf3cd"/>
+      <stop offset="25%" stop-color="#dfbe66"/>
+      <stop offset="50%" stop-color="#c9a84c"/>
+      <stop offset="75%" stop-color="#8f6d23"/>
+      <stop offset="100%" stop-color="#f5ecd5"/>
+    </linearGradient>
+
+    <!-- Facet 1: Left Wing Outer Face (Brilliant Gleaming Gold) -->
+    <linearGradient id="facetLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8db"/>
+      <stop offset="25%" stop-color="#f7e49e"/>
+      <stop offset="65%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#a88220"/>
+    </linearGradient>
+
+    <!-- Facet 2: Left Wing Inner Face (Deep Sculpted Antique Gold) -->
+    <linearGradient id="facetDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b88f28"/>
+      <stop offset="40%" stop-color="#8a6714"/>
+      <stop offset="75%" stop-color="#604407"/>
+      <stop offset="100%" stop-color="#402d03"/>
+    </linearGradient>
+
+    <!-- Facet 3: Right Wing Inner Face (Warm Metallic Gold) -->
+    <linearGradient id="facetMedium" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fae7a7"/>
+      <stop offset="40%" stop-color="#d6b045"/>
+      <stop offset="80%" stop-color="#a47f20"/>
+      <stop offset="100%" stop-color="#6e500e"/>
+    </linearGradient>
+
+    <!-- Facet 4: Right Wing Outer Face (Rich Amber Gold) -->
+    <linearGradient id="facetAccent" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e8c45d"/>
+      <stop offset="50%" stop-color="#a6801e"/>
+      <stop offset="100%" stop-color="#543c06"/>
+    </linearGradient>
+
+    <!-- Serif Gradient -->
+    <linearGradient id="serifGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#9a7622"/>
+      <stop offset="35%" stop-color="#fff4cd"/>
+      <stop offset="70%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#8f6b1b"/>
+    </linearGradient>
+
+    <!-- Drop Shadow for 3D Depth -->
+    <filter id="luxDropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#000000" flood-opacity="0.95"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#c9a84c" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Luxury Dark Squircle Base -->
+  <rect width="512" height="512" rx="124" fill="url(#bgGlow)"/>
+  
+  <!-- Outer Gold Rim -->
+  <rect width="488" height="488" x="12" y="12" rx="112" fill="none" stroke="url(#goldRim)" stroke-width="6" stroke-opacity="0.8"/>
+
+  <!-- Inner Subtle Accent Ring -->
+  <rect width="464" height="464" x="24" y="24" rx="100" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.07"/>
+
+  <!-- The Golden "V" -->
+  <g filter="url(#luxDropShadow)">
+    <!-- Top-Left Serif Cap -->
+    <polygon points="96,108 228,108 220,126 104,126" fill="url(#serifGrad)" />
+
+    <!-- Top-Right Serif Cap -->
+    <polygon points="284,108 416,108 408,126 292,126" fill="url(#serifGrad)" />
+
+    <!-- Facet 1: Left Wing Outer Face (Bright & Gleaming) -->
+    <polygon points="112,126 162,126 256,416" fill="url(#facetLight)" />
+
+    <!-- Facet 2: Left Wing Inner Face (Deep Antique Gold) -->
+    <polygon points="162,126 212,126 256,310 256,416" fill="url(#facetDark)" />
+
+    <!-- Facet 3: Right Wing Inner Face (Warm Metallic Gold) -->
+    <polygon points="256,310 300,126 350,126 256,416" fill="url(#facetMedium)" />
+
+    <!-- Facet 4: Right Wing Outer Face (Rich Amber Gold) -->
+    <polygon points="350,126 400,126 256,416" fill="url(#facetAccent)" />
+
+    <!-- Ridge Specular Highlight Lines -->
+    <line x1="162" y1="126" x2="256" y2="416" stroke="#fffceb" stroke-width="2.5" stroke-opacity="0.9" stroke-linecap="round"/>
+    <line x1="350" y1="126" x2="256" y2="416" stroke="#fffceb" stroke-width="1.5" stroke-opacity="0.6" stroke-linecap="round"/>
+    <line x1="256" y1="310" x2="256" y2="416" stroke="#fff7d6" stroke-width="1.5" stroke-opacity="0.75" stroke-linecap="round"/>
+  </g>
+</svg>
