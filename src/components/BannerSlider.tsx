@@ -277,32 +277,6 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                       }
                     }}
                   />
-
-                  {/* Interactive Category Destination Badge on Banner */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onSelectCategory) {
-                        onSelectCategory(targetCategory);
-                      }
-                    }}
-                    className="absolute bottom-3 sm:bottom-4 start-3 sm:start-4 z-20 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full bg-black/75 hover:bg-black/95 backdrop-blur-md border border-[#c9a84c]/50 hover:border-[#c9a84c] text-[#f5ecd5] text-[11px] sm:text-xs font-black flex items-center gap-1.5 shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
-                    title={isRtl ? 'اضغط لعرض قسم العطور' : 'Click to explore category'}
-                  >
-                    <span>
-                      {targetCategory === 'winter'
-                        ? (isRtl ? '❄️ عطور شتوية' : '❄️ Winter Fragrances')
-                        : targetCategory === 'occasions'
-                        ? (isRtl ? '👑 عطور المناسبات' : '👑 Occasions Fragrances')
-                        : targetCategory === 'sport'
-                        ? (isRtl ? '⚡ عطور رياضية' : '⚡ Sport Fragrances')
-                        : (isRtl ? '☀️ عطور صيفية' : '☀️ Summer Fragrances')}
-                    </span>
-                    <span className="text-[#c9a84c] font-black ms-0.5">
-                      {isRtl ? '← تصفح' : 'Explore →'}
-                    </span>
-                  </button>
                 </div>
               );
             })}
