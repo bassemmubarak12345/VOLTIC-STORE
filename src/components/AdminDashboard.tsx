@@ -1802,17 +1802,60 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 />
               </div>
 
+              {/* Category Image */}
               <div>
-                <label className="block text-xs font-bold text-gray-300 mb-1">
-                  {isRtl ? 'رابط صورة القسم' : 'Category Image URL'}
+                <label className="block text-xs font-bold text-gray-300 mb-1.5">
+                  {isRtl ? 'صورة القسم (اختر من جهازك أو اكتب رابط)' : 'Category Image (Upload or URL)'} *
                 </label>
-                <input
-                  type="url"
-                  required
-                  value={editingCategory.img}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, img: e.target.value })}
-                  className="w-full bg-[#1a1a1a] border border-[#c9a84c]/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#c9a84c]"
-                />
+
+                {/* Preview and Upload box */}
+                <div className="flex items-center gap-3 p-3 bg-[#1a1a1a] border border-[#c9a84c]/25 rounded-xl">
+                  {editingCategory.img ? (
+                    <img
+                      src={editingCategory.img}
+                      alt="Category Preview"
+                      className="w-16 h-16 rounded-full object-cover border-2 border-[#c9a84c] flex-shrink-0 bg-black"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-black/50 border border-white/10 flex items-center justify-center text-gray-500 flex-shrink-0">
+                      <ImageIcon className="w-6 h-6" />
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <label className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[#c9a84c]/20 hover:bg-[#c9a84c] text-[#c9a84c] hover:text-black font-bold text-xs cursor-pointer transition-all">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{isRtl ? 'رفع صورة من الجهاز' : 'Upload from device'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              const result = event.target?.result as string;
+                              if (result) {
+                                setEditingCategory({ ...editingCategory, img: result });
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+
+                    <input
+                      type="url"
+                      required
+                      value={editingCategory.img}
+                      onChange={(e) => setEditingCategory({ ...editingCategory, img: e.target.value })}
+                      placeholder="https://... (Image URL)"
+                      className="w-full bg-[#141414] border border-[#c9a84c]/30 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#c9a84c]"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>

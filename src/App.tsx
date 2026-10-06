@@ -416,14 +416,6 @@ export default function App() {
 
   const handleSelectCategory = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    const cat = categories.find((c) => c.id === categoryId);
-    if (cat) {
-      showToast(
-        language === 'ar'
-          ? `تم الانتقال إلى: ${cat.titleAr} ✨`
-          : `Switched to: ${cat.titleEn} ✨`
-      );
-    }
     const element = document.getElementById('products-section');
     if (element) {
       const offset = 80;

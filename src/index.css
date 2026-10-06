@@ -119,3 +119,20 @@ body {
   animation: pulseWa 2.4s infinite;
 }
 
+/* Continuous Waterwheel (ساقية مستمرة للأقسام تتحرك من الشمال إلى اليمين بسلاسة وبدون أي انقطاع) */
+@keyframes waterwheelLoop {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.waterwheel-track {
+  display: flex;
+  width: max-content;
+  animation: waterwheelLoop 48s linear infinite;
+  will-change: transform;
+}
+
