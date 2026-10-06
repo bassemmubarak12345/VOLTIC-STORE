@@ -58,6 +58,7 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { Product, CategoryItem, Banner, Order, StoreSettings, Language } from '../types';
+import { compressImageFile } from '../utils/imageCompressor';
 
 interface AdminDashboardProps {
   language: Language;
@@ -989,14 +990,65 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </p>
                       </div>
 
-                      <div className="pt-2 border-t border-white/5 mt-2">
+                      <div className="pt-2 border-t border-white/5 mt-2 flex items-center gap-2 flex-wrap">
                         <button
+                          type="button"
                           onClick={() => setEditingCategory({ ...cat })}
-                          className="py-1 px-3 rounded-lg bg-[#c9a84c]/20 hover:bg-[#c9a84c] hover:text-black text-[#c9a84c] text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                          className="py-1.5 px-3 rounded-lg bg-[#c9a84c]/20 hover:bg-[#c9a84c] hover:text-black text-[#c9a84c] text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                         >
                           <Edit className="w-3.5 h-3.5" />
                           <span>{isRtl ? 'تعديل القسم' : 'Edit Category'}</span>
                         </button>
+
+                        {/* Quick Upload from Device with Compression */}
+                        <label className="py-1.5 px-3 rounded-lg bg-white/10 hover:bg-[#c9a84c] hover:text-black text-gray-300 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{isRtl ? 'تغيير الصورة' : 'Change Image'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                try {
+                                  showNotification(isRtl ? 'جاري ضغط ورفع الصورة...' : 'Compressing image...');
+                                  const compressed = await compressImageFile(file, { maxWidth: 600, maxHeight: 600, quality: 0.90 });
+                                  const updatedCat = { ...cat, img: compressed };
+                                  await saveCategoryToFirestore(updatedCat);
+                                  showNotification(isRtl ? 'تم تحديث صورة القسم في السحابة بنجاح ✨' : 'Category image updated');
+                                } catch (err) {
+                                  console.error('Category image upload error:', err);
+                                  showNotification(isRtl ? 'فشل رفع الصورة' : 'Upload failed', 'error');
+                                }
+                              }
+                            }}
+                          />
+                        </label>
+
+                        {/* Delete Image button */}
+                        {cat.img && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (window.confirm(isRtl ? `هل تريد حذف صورة قسم "${cat.titleAr}"؟` : `Remove image for "${cat.titleEn}"?`)) {
+                                try {
+                                  const updatedCat = { ...cat, img: '' };
+                                  await saveCategoryToFirestore(updatedCat);
+                                  showNotification(isRtl ? 'تم حذف صورة القسم بنجاح' : 'Category image removed');
+                                } catch (err) {
+                                  console.error('Delete category image error:', err);
+                                  showNotification(isRtl ? 'فشل حذف الصورة' : 'Failed to delete image', 'error');
+                                }
+                              }
+                            }}
+                            className="py-1.5 px-2 rounded-lg bg-red-950/40 hover:bg-red-600 text-red-400 hover:text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                            title={isRtl ? 'حذف صورة القسم' : 'Delete Category Image'}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>{isRtl ? 'حذف الصورة' : 'Delete'}</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1460,18 +1512,76 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
+              {/* Product Image Section with Upload & Delete */}
               <div>
-                <label className="block text-xs font-bold text-gray-300 mb-1">
-                  {isRtl ? 'رابط صورة العطر (URL)' : 'Product Image URL'} *
+                <label className="block text-xs font-bold text-gray-300 mb-1.5">
+                  {isRtl ? 'صورة العطر (اختر من جهازك أو اكتب رابط)' : 'Fragrance Image (Upload or URL)'} *
                 </label>
-                <input
-                  type="url"
-                  required
-                  value={editingProduct.img || ''}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, img: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full bg-[#1a1a1a] border border-[#c9a84c]/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#c9a84c]"
-                />
+
+                <div className="flex items-center gap-3 p-3 bg-[#1a1a1a] border border-[#c9a84c]/25 rounded-xl">
+                  {editingProduct.img ? (
+                    <img
+                      src={editingProduct.img}
+                      alt="Fragrance Preview"
+                      className="w-16 h-20 rounded-lg object-cover border border-[#c9a84c] flex-shrink-0 bg-black shadow-md"
+                    />
+                  ) : (
+                    <div className="w-16 h-20 rounded-lg bg-black/50 border border-white/10 flex items-center justify-center text-gray-500 flex-shrink-0">
+                      <ImageIcon className="w-6 h-6" />
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <label className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[#c9a84c]/20 hover:bg-[#c9a84c] text-[#c9a84c] hover:text-black font-bold text-xs cursor-pointer transition-all">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{isRtl ? 'رفع صورة من الجهاز' : 'Upload from device'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              try {
+                                showNotification(isRtl ? 'جاري ضغط ومعالجة الصورة...' : 'Compressing image...');
+                                const compressed = await compressImageFile(file, { maxWidth: 1000, maxHeight: 1200, quality: 0.88 });
+                                setEditingProduct({ ...editingProduct, img: compressed });
+                                showNotification(isRtl ? 'تم تجهيز صورة العطر بنجاح' : 'Product image ready');
+                              } catch (err) {
+                                console.error('Product image upload error:', err);
+                                showNotification(isRtl ? 'فشل معالجة الصورة' : 'Failed to process image', 'error');
+                              }
+                            }
+                          }}
+                        />
+                      </label>
+
+                      {/* زر حذف صورة العطر */}
+                      {editingProduct.img && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingProduct({ ...editingProduct, img: '' });
+                            showNotification(isRtl ? 'تم حذف صورة العطر من المعاينة' : 'Image cleared from preview');
+                          }}
+                          className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-red-950/40 hover:bg-red-600 text-red-300 hover:text-white font-bold text-xs cursor-pointer transition-all border border-red-500/30"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>{isRtl ? 'حذف صورة العطر' : 'Delete Image'}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <input
+                      type="url"
+                      value={editingProduct.img || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, img: e.target.value })}
+                      placeholder="https://... (Image URL)"
+                      className="w-full bg-[#141414] border border-[#c9a84c]/30 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#c9a84c]"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -1688,18 +1798,80 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </h3>
 
             <form onSubmit={handleSaveBanner} className="space-y-4">
+              {/* Banner Image with Upload & Delete */}
               <div>
-                <label className="block text-xs font-bold text-gray-300 mb-1">
-                  {isRtl ? 'رابط صورة البنر (URL)' : 'Banner Image URL'} *
+                <label className="block text-xs font-bold text-gray-300 mb-1.5">
+                  {isRtl ? 'صورة البنر (اختر من جهازك أو اكتب رابط)' : 'Banner Image (Upload or URL)'} *
                 </label>
-                <input
-                  type="url"
-                  required
-                  value={editingBanner.image || ''}
-                  onChange={(e) => setEditingBanner({ ...editingBanner, image: e.target.value })}
-                  placeholder="https://... or /banners/banner-1.jpg"
-                  className="w-full bg-[#1a1a1a] border border-[#c9a84c]/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#c9a84c]"
-                />
+
+                <div className="p-3 bg-[#1a1a1a] border border-[#c9a84c]/25 rounded-xl space-y-3">
+                  {/* Banner Preview */}
+                  {editingBanner.image ? (
+                    <div className="relative aspect-[16/7] w-full rounded-lg overflow-hidden border border-[#c9a84c] bg-black shadow-md">
+                      <img
+                        src={editingBanner.image}
+                        alt="Banner Preview"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-[16/7] w-full rounded-lg bg-black/50 border border-white/10 flex items-center justify-center text-gray-500 text-xs">
+                      <div className="flex flex-col items-center gap-1">
+                        <ImageIcon className="w-8 h-8 opacity-40" />
+                        <span>{isRtl ? 'لا توجد صورة محددة' : 'No image selected'}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <label className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[#c9a84c]/20 hover:bg-[#c9a84c] text-[#c9a84c] hover:text-black font-bold text-xs cursor-pointer transition-all">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{isRtl ? 'رفع صورة من الجهاز' : 'Upload from device'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              showNotification(isRtl ? 'جاري ضغط ومعالجة البنر...' : 'Compressing banner...');
+                              const compressed = await compressImageFile(file, { maxWidth: 1600, maxHeight: 900, quality: 0.90 });
+                              setEditingBanner({ ...editingBanner, image: compressed });
+                              showNotification(isRtl ? 'تم تجهيز صورة البنر بنجاح' : 'Banner image ready');
+                            } catch (err) {
+                              console.error('Banner upload error:', err);
+                              showNotification(isRtl ? 'فشل معالجة الصورة' : 'Failed to process banner', 'error');
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+
+                    {/* زر حذف صورة البنر */}
+                    {editingBanner.image && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingBanner({ ...editingBanner, image: '' });
+                          showNotification(isRtl ? 'تم حذف صورة البنر من المعاينة' : 'Image cleared');
+                        }}
+                        className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-red-950/40 hover:bg-red-600 text-red-300 hover:text-white font-bold text-xs cursor-pointer transition-all border border-red-500/30"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>{isRtl ? 'حذف صورة البنر' : 'Delete Image'}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <input
+                    type="url"
+                    value={editingBanner.image || ''}
+                    onChange={(e) => setEditingBanner({ ...editingBanner, image: e.target.value })}
+                    placeholder="https://... or /banners/banner-1.jpg"
+                    className="w-full bg-[#141414] border border-[#c9a84c]/30 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#c9a84c]"
+                  />
+                </div>
               </div>
 
               <div>
@@ -1814,7 +1986,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <img
                       src={editingCategory.img}
                       alt="Category Preview"
-                      className="w-16 h-16 rounded-full object-cover border-2 border-[#c9a84c] flex-shrink-0 bg-black"
+                      className="w-16 h-16 rounded-full object-cover border-2 border-[#c9a84c] flex-shrink-0 bg-black shadow-md"
                     />
                   ) : (
                     <div className="w-16 h-16 rounded-full bg-black/50 border border-white/10 flex items-center justify-center text-gray-500 flex-shrink-0">
@@ -1823,33 +1995,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   )}
 
                   <div className="flex-1 min-w-0 space-y-2">
-                    <label className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[#c9a84c]/20 hover:bg-[#c9a84c] text-[#c9a84c] hover:text-black font-bold text-xs cursor-pointer transition-all">
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>{isRtl ? 'رفع صورة من الجهاز' : 'Upload from device'}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                              const result = event.target?.result as string;
-                              if (result) {
-                                setEditingCategory({ ...editingCategory, img: result });
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <label className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[#c9a84c]/20 hover:bg-[#c9a84c] text-[#c9a84c] hover:text-black font-bold text-xs cursor-pointer transition-all">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{isRtl ? 'رفع صورة من الجهاز' : 'Upload from device'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              try {
+                                showNotification(isRtl ? 'جاري ضغط ومعاينة الصورة...' : 'Compressing image...');
+                                const compressed = await compressImageFile(file, { maxWidth: 600, maxHeight: 600, quality: 0.90 });
+                                setEditingCategory({ ...editingCategory, img: compressed });
+                                showNotification(isRtl ? 'تم تجهيز الصورة بنجاح' : 'Image ready');
+                              } catch (err) {
+                                console.error('Image upload error:', err);
+                                showNotification(isRtl ? 'فشل معالجة الصورة' : 'Failed to process image', 'error');
                               }
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-                    </label>
+                            }
+                          }}
+                        />
+                      </label>
+
+                      {/* زر حذف صورة القسم - يشتغل فوراً وبضغطة واحدة */}
+                      {editingCategory.img && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingCategory({ ...editingCategory, img: '' });
+                            showNotification(isRtl ? 'تم حذف صورة القسم من المعاينة' : 'Image cleared from preview');
+                          }}
+                          className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-red-950/40 hover:bg-red-600 text-red-300 hover:text-white font-bold text-xs cursor-pointer transition-all border border-red-500/30"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>{isRtl ? 'حذف صورة القسم' : 'Delete Image'}</span>
+                        </button>
+                      )}
+                    </div>
 
                     <input
                       type="url"
-                      required
-                      value={editingCategory.img}
+                      value={editingCategory.img || ''}
                       onChange={(e) => setEditingCategory({ ...editingCategory, img: e.target.value })}
                       placeholder="https://... (Image URL)"
                       className="w-full bg-[#141414] border border-[#c9a84c]/30 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#c9a84c]"
