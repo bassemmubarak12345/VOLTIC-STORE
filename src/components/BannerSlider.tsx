@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Upload, Image as ImageIcon, Plus } from 'lucide-react';
 import { Language } from '../types';
 import { DEFAULT_BANNERS, BannerItem } from '../data/banners';
+import { Banner } from '../types';
 
 interface BannerSliderProps {
   language: Language;
-  banners?: BannerItem[];
+  banners?: (BannerItem | Banner)[];
   autoSlideInterval?: number;
   onSelectCategory?: (category: 'summer' | 'winter' | 'occasions' | 'sport') => void;
 }
@@ -20,18 +21,34 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
 }) => {
   const isRtl = language === 'ar';
 
-  // Load banners: exactly the 3 banners provided in DEFAULT_BANNERS
+  const normalizeBannerList = useCallback((list: (BannerItem | Banner)[]): BannerItem[] => {
+    return list
+      .map((b, idx) => {
+        const img = b.image || (b as Banner).img || '';
+        return {
+          id: String(b.id || `banner-${idx}`),
+          image: img,
+          fallbackImage: (b as BannerItem).fallbackImage,
+          altAr: b.altAr || 'VOLTIC',
+          altEn: b.altEn || 'VOLTIC',
+          category: (b.category as BannerItem['category']) || 'summer',
+        };
+      })
+      .filter((b) => Boolean(b.image && b.image.trim()));
+  }, []);
+
+  // Load banners
   const [bannersList, setBannersList] = useState<BannerItem[]>(() => {
-    return propBanners.filter((b) => Boolean(b.image && b.image.trim()));
+    return normalizeBannerList(propBanners);
   });
 
   // Keep banners list strictly in sync with propBanners
   useEffect(() => {
     if (propBanners && propBanners.length > 0) {
-      setBannersList(propBanners.filter((b) => Boolean(b.image && b.image.trim())));
+      setBannersList(normalizeBannerList(propBanners));
       setFailedImageIds({});
     }
-  }, [propBanners]);
+  }, [propBanners, normalizeBannerList]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);

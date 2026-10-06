@@ -1,9 +1,10 @@
 import React from 'react';
-import { Language } from '../types';
+import { Language, StoreSettings } from '../types';
 import { TRANSLATIONS } from '../data/translations';
 
 interface FooterProps {
   language: Language;
+  settings?: StoreSettings | null;
   onOpenOrders: () => void;
   onOpenOwnerPanel: () => void;
   onScrollToSection: (id: string) => void;
@@ -12,12 +13,24 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({
   language,
+  settings,
   onOpenOrders,
   onOpenOwnerPanel,
   onScrollToSection,
   onSelectCategory,
 }) => {
   const t = TRANSLATIONS[language];
+  const isRtl = language === 'ar';
+
+  const brandTitle = settings?.storeNameAr || 'VOLTIC';
+  const brandSub = isRtl
+    ? settings?.brandSubAr || t.brandSub
+    : settings?.brandSubEn || t.brandSub;
+  const whatsappNum = settings?.whatsappNumber || '201029012522';
+  const designerWhatsapp = settings?.designerWhatsapp || '201146388578';
+  const footerRights = isRtl
+    ? settings?.footerRightsAr || t.footerRights
+    : settings?.footerRightsEn || t.footerRights;
 
   const handleCategoryClick = (catId: string) => {
     if (onSelectCategory) {
@@ -30,7 +43,7 @@ export const Footer: React.FC<FooterProps> = ({
   return (
     <footer
       id="mainFooter"
-      className="w-full pt-10 pb-24 sm:pb-28 border-t border-[#c9a84c]/20 transition-colors duration-300"
+      className="w-full pt-10 pb-24 sm:pb-28 border-t border-[#c9a84c]/20 transition-colors duration-300 relative"
       style={{
         backgroundColor: 'var(--bg-strip)',
       }}
@@ -40,10 +53,10 @@ export const Footer: React.FC<FooterProps> = ({
         {/* 1. اللوجو في النصف */}
         <div className="flex flex-col items-center justify-center">
           <span className="text-2xl sm:text-3xl font-black tracking-[4px] sm:tracking-[5px] text-gold-gradient inline-block font-['Cinzel',sans-serif] select-none leading-tight">
-            VOLTIC
+            {brandTitle}
           </span>
           <p className="text-[10px] sm:text-[11px] tracking-[2.5px] text-[#c9a84c] font-semibold uppercase mt-1">
-            {t.brandSub}
+            {brandSub}
           </p>
         </div>
 
@@ -83,7 +96,7 @@ export const Footer: React.FC<FooterProps> = ({
             {t.myOrders}
           </button>
           <a
-            href="https://wa.me/201029012522"
+            href={`https://wa.me/${whatsappNum.replace(/[^0-9]/g, '')}`}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[#25D366] text-[#c9a84c] transition-colors cursor-pointer tracking-wide flex items-center justify-center gap-1.5"
@@ -100,18 +113,16 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="flex flex-col items-center justify-center gap-2 text-xs text-[var(--text-muted)]">
           {/* حقوق الموقع */}
           <p
-            onDoubleClick={onOpenOwnerPanel}
-            title="VOLTIC Luxury"
             className="text-[11px] sm:text-xs select-none cursor-default"
           >
-            {t.footerRights}
+            {footerRights}
           </p>
 
           {/* المصمم BRM DIGITAL برابط مباشر للواتساب */}
           <div className="flex items-center justify-center gap-1.5 text-[11px] sm:text-xs">
             <span>{t.designedBy}</span>
             <a
-              href="https://wa.me/201146388578"
+              href={`https://wa.me/${designerWhatsapp.replace(/[^0-9]/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
               title={t.contactDesigner}

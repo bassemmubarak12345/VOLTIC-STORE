@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Language, Theme, Product, CartItem, User, Order } from './types';
-import { PRODUCTS, CATEGORIES_DATA } from './data/products';
+import { Language, Theme, Product, CartItem, User, Order, StoreSettings, CategoryItem, Banner } from './types';
+import { PRODUCTS as DEFAULT_PRODUCTS, CATEGORIES_DATA as DEFAULT_CATEGORIES } from './data/products';
+import { DEFAULT_BANNERS } from './data/banners';
 import { TRANSLATIONS } from './data/translations';
 import { validateAndApplyCoupon, PROMO_RULES } from './utils/discount';
 import { Header } from './components/Header';
@@ -15,6 +16,18 @@ import { OrderConfirmationModal } from './components/OrderConfirmationModal';
 import { OrdersListModal } from './components/OrdersListModal';
 import { SearchModal } from './components/SearchModal';
 import { Footer } from './components/Footer';
+import { AdminLogin } from './components/AdminLogin';
+import { AdminDashboard } from './components/AdminDashboard';
+import {
+  auth,
+  subscribeProducts,
+  subscribeCategories,
+  subscribeBanners,
+  subscribeSettings,
+  createOrderInFirestore,
+  getCustomerProfile,
+} from './lib/firebase';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
 export default function App() {
   // 1. Language state: 'ar' (default) or 'en'
@@ -54,6 +67,23 @@ export default function App() {
     }
   });
 
+  // 4. Real-time Firestore Cloud States
+  const [products, setProducts] = useState<Product[]>(DEFAULT_PRODUCTS);
+  const [categories, setCategories] = useState<CategoryItem[]>(DEFAULT_CATEGORIES as unknown as CategoryItem[]);
+  const [banners, setBanners] = useState<Banner[]>(DEFAULT_BANNERS as unknown as Banner[]);
+  const [settings, setSettings] = useState<StoreSettings | null>(null);
+
+  // 5. Admin & Auth state
+  const [adminAuthUser, setAdminAuthUser] = useState<FirebaseUser | null>(null);
+  const [isAdminView, setIsAdminView] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.toLowerCase();
+      const path = window.location.pathname.toLowerCase();
+      return hash === '#admin' || hash === '#login' || path === '/login' || path === '/admin';
+    }
+    return false;
+  });
+
   // Modals & UI states
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -70,9 +100,76 @@ export default function App() {
   // Discount coupon state
   const [appliedCouponCode, setAppliedCouponCode] = useState<string>('');
 
+  // ----------------------------------------------------
+  // FIREBASE REAL-TIME SUBSCRIPTIONS
+  // ----------------------------------------------------
+  useEffect(() => {
+    // 1. Subscribe to Products
+    const unsubProducts = subscribeProducts((data) => {
+      if (data && data.length > 0) {
+        setProducts(data);
+      }
+    });
+
+    // 2. Subscribe to Categories
+    const unsubCategories = subscribeCategories((data) => {
+      if (data && data.length > 0) {
+        setCategories(data);
+      }
+    });
+
+    // 3. Subscribe to Banners
+    const unsubBanners = subscribeBanners((data) => {
+      if (data && data.length > 0) {
+        setBanners(data);
+      }
+    });
+
+    // 4. Subscribe to Store Settings
+    const unsubSettings = subscribeSettings((data) => {
+      if (data) {
+        setSettings(data);
+      }
+    });
+
+    // 5. Subscribe to Firebase Auth state
+    const unsubAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      setAdminAuthUser(firebaseUser);
+      if (firebaseUser) {
+        try {
+          const profile = await getCustomerProfile(firebaseUser.uid);
+          if (profile) {
+            setCurrentUser(profile);
+            localStorage.setItem('voltic_current_user', JSON.stringify(profile));
+          }
+        } catch {
+          // ignore
+        }
+      }
+    });
+
+    // 6. Listen for hash changes to trigger Admin view (#admin, #login)
+    const handleHashChange = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === '#admin' || hash === '#login') {
+        setIsAdminView(true);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      unsubProducts();
+      unsubCategories();
+      unsubBanners();
+      unsubSettings();
+      unsubAuth();
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
   const appliedCoupon = useMemo(() => {
     if (!appliedCouponCode) return null;
-    const res = validateAndApplyCoupon(appliedCouponCode, cart, PRODUCTS, language);
+    const res = validateAndApplyCoupon(appliedCouponCode, cart, products, language);
     if (res.success && res.rule) {
       return {
         code: res.code!,
@@ -82,7 +179,7 @@ export default function App() {
       };
     }
     return null;
-  }, [appliedCouponCode, cart, language]);
+  }, [appliedCouponCode, cart, products, language]);
 
   const handleApplyCoupon = (code: string) => {
     const cleanCode = code.trim().replace(/[\s\-_]/g, '').toUpperCase();
@@ -94,12 +191,11 @@ export default function App() {
       };
     }
 
-    // Check against cart OR current product in quickview
     const simulatedCart = (quickViewProduct && !cart.some((c) => c.id === quickViewProduct.id))
       ? [...cart, { id: quickViewProduct.id, qty: 1 }]
       : cart;
 
-    const res = validateAndApplyCoupon(cleanCode, simulatedCart, PRODUCTS, language);
+    const res = validateAndApplyCoupon(cleanCode, simulatedCart, products, language);
     if (res.success || (quickViewProduct && quickViewProduct.category === rule.category)) {
       setAppliedCouponCode(rule.code);
       showToast(
@@ -236,8 +332,8 @@ export default function App() {
     showToast(t.loggedOutMsg);
   };
 
-  // Checkout process: creates order, sends to WhatsApp, shows order confirmation
-  const handleCheckout = () => {
+  // Checkout process: creates order, saves directly to Firestore, shows order confirmation
+  const handleCheckout = async () => {
     if (cart.length === 0) return;
 
     if (!currentUser) {
@@ -249,7 +345,7 @@ export default function App() {
     const orderId = 'VLT-' + Date.now().toString().slice(-6);
     const detailedItems = cart
       .map((item) => {
-        const p = PRODUCTS.find((prod) => prod.id === item.id);
+        const p = products.find((prod) => prod.id === item.id);
         if (!p) return null;
         return {
           name: language === 'ar' ? p.nameAr : p.nameEn,
@@ -266,8 +362,11 @@ export default function App() {
     const newOrder: Order = {
       id: orderId,
       date: new Date().toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US'),
+      timestamp: Date.now(),
+      status: 'pending',
       customer: {
         name: currentUser.name,
+        email: currentUser.email,
         phone: currentUser.phone,
         phone2: currentUser.phone2,
         address: currentUser.address,
@@ -280,6 +379,15 @@ export default function App() {
       total: finalTotal,
     };
 
+    // Save to Firestore Real-Time Cloud Orders Collection
+    try {
+      await createOrderInFirestore(newOrder);
+      console.log('Order successfully saved to Firestore:', orderId);
+    } catch (err) {
+      console.error('Failed saving order to Firestore:', err);
+    }
+
+    // Save locally as backup for customer orders view
     let ordersList: Order[] = [];
     try {
       ordersList = JSON.parse(localStorage.getItem('voltic_orders') || '[]');
@@ -293,7 +401,7 @@ export default function App() {
       // ignore
     }
 
-    // Clear cart and show order confirmation modal directly
+    // Clear cart and show order confirmation modal
     setCart([]);
     setAppliedCouponCode('');
     setIsCartOpen(false);
@@ -302,26 +410,13 @@ export default function App() {
   };
 
   const handleOpenOwnerPanel = () => {
-    const password = prompt(
-      language === 'ar'
-        ? 'أدخل كلمة مرور إدارة المتجر:'
-        : 'Enter Store Admin Password:'
-    );
-    if (password === 'VOLTIC-OWNER-2026') {
-      setOrdersModalTitle(t.ownerOrdersTitle);
-      setIsOrdersListOpen(true);
-    } else if (password !== null) {
-      showToast(
-        language === 'ar'
-          ? 'كلمة المرور غير صحيحة'
-          : 'Invalid administrator password'
-      );
-    }
+    setIsAdminView(true);
+    window.location.hash = '#admin';
   };
 
   const handleSelectCategory = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    const cat = CATEGORIES_DATA.find((c) => c.id === categoryId);
+    const cat = categories.find((c) => c.id === categoryId);
     if (cat) {
       showToast(
         language === 'ar'
@@ -364,6 +459,37 @@ export default function App() {
     }
   };
 
+  // =========================================================================
+  // VIEW: ADMIN VIEW (PROTECTED WITH REAL FIREBASE AUTH)
+  // =========================================================================
+  if (isAdminView) {
+    if (adminAuthUser) {
+      return (
+        <AdminDashboard
+          language={language}
+          onExitDashboard={() => {
+            setIsAdminView(false);
+            window.location.hash = '';
+          }}
+        />
+      );
+    } else {
+      return (
+        <AdminLogin
+          language={language}
+          onSuccess={() => setIsAdminView(true)}
+          onBackToStore={() => {
+            setIsAdminView(false);
+            window.location.hash = '';
+          }}
+        />
+      );
+    }
+  }
+
+  // =========================================================================
+  // VIEW: CUSTOMER LUXURY STORE FRONTEND
+  // =========================================================================
   return (
     <div className="min-h-screen flex flex-col selection:bg-[#c9a84c] selection:text-black">
       
@@ -374,6 +500,7 @@ export default function App() {
         theme={theme}
         cartCount={cartCount}
         cartNotice={cartNotice}
+        settings={settings}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenAccount={() => {
@@ -392,22 +519,25 @@ export default function App() {
           setOrdersModalTitle(t.myOrders);
           setIsOrdersListOpen(true);
         }}
+        onOpenAdmin={handleOpenOwnerPanel}
         onSelectCategory={handleSelectCategory}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 pb-12">
-        {/* ===== HERO BANNER SLIDER (With Crossfade and Native Proportions) ===== */}
+        {/* ===== HERO BANNER SLIDER (With Crossfade and Real-Time Sync) ===== */}
         <BannerSlider
           language={language}
+          banners={banners}
           onSelectCategory={(cat) => handleSelectCategory(cat)}
         />
 
-        {/* ===== CIRCULAR CATEGORIES SLIDER ===== */}
+        {/* ===== CIRCULAR CATEGORIES SLIDER (Real-Time Cloud Sync) ===== */}
         <div id="categories-section" className="pt-2 sm:pt-4 pb-2 sm:pb-3">
           <CircularCategoriesSlider
             language={language}
             selectedCategory={selectedCategory}
+            categories={categories}
             onSelectCategory={(categoryId) => handleSelectCategory(categoryId)}
           />
         </div>
@@ -415,11 +545,18 @@ export default function App() {
         {/* ===== SINGLE ACTIVE CATEGORY PRODUCTS SECTION (One category only at a time) ===== */}
         {(() => {
           const activeCategory =
-            CATEGORIES_DATA.find((c) => c.id === selectedCategory) ||
-            CATEGORIES_DATA[0];
-          const categoryProducts = PRODUCTS.filter(
-            (p) => p.category === activeCategory.id
+            categories.find((c) => c.id === selectedCategory) ||
+            categories[0] ||
+            (DEFAULT_CATEGORIES[0] as unknown as CategoryItem);
+          const rawFiltered = products.filter(
+            (p) => String(p.category || '').toLowerCase() === String(activeCategory.id).toLowerCase()
           );
+          const categoryProducts =
+            rawFiltered.length > 0
+              ? rawFiltered
+              : DEFAULT_PRODUCTS.filter(
+                  (p) => String(p.category || '').toLowerCase() === String(activeCategory.id).toLowerCase()
+                );
           const categoryTitle = isRtl ? activeCategory.titleAr : activeCategory.titleEn;
           const categoryTag = isRtl ? activeCategory.tagAr : activeCategory.tagEn;
           const categoryDesc = isRtl ? activeCategory.descAr : activeCategory.descEn;
@@ -477,6 +614,7 @@ export default function App() {
       {/* ===== FOOTER ===== */}
       <Footer
         language={language}
+        settings={settings}
         onOpenOrders={() => {
           setOrdersModalTitle(t.myOrders);
           setIsOrdersListOpen(true);
@@ -513,7 +651,7 @@ export default function App() {
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         cart={cart}
-        products={PRODUCTS}
+        products={products}
         language={language}
         onUpdateQty={handleUpdateQty}
         onRemoveItem={handleRemoveFromCart}
@@ -552,7 +690,7 @@ export default function App() {
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         language={language}
-        products={PRODUCTS}
+        products={products}
         onAddToCart={(p) => handleAddToCart(p, 1)}
         onQuickView={(p) => setQuickViewProduct(p)}
         onSelectCategory={handleSelectCategory}

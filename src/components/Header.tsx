@@ -11,7 +11,7 @@ import {
   LogIn,
   Package,
 } from 'lucide-react';
-import { Language, Theme } from '../types';
+import { Language, Theme, StoreSettings } from '../types';
 import { TRANSLATIONS } from '../data/translations';
 
 interface HeaderProps {
@@ -20,12 +20,14 @@ interface HeaderProps {
   theme: Theme;
   cartCount: number;
   cartNotice?: string | null;
+  settings?: StoreSettings | null;
   onOpenCart: () => void;
   onOpenSearch: () => void;
   onOpenAccount: () => void;
   onOpenRegister: () => void;
   onOpenLogin: () => void;
   onOpenOrders: () => void;
+  onOpenAdmin?: () => void;
   onSelectCategory?: (categoryId: string) => void;
 }
 
@@ -34,16 +36,23 @@ export const Header: React.FC<HeaderProps> = ({
   setLanguage,
   cartCount,
   cartNotice,
+  settings,
   onOpenCart,
   onOpenSearch,
   onOpenRegister,
   onOpenLogin,
   onOpenOrders,
+  onOpenAdmin,
   onSelectCategory,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const t = TRANSLATIONS[language];
   const isRtl = language === 'ar';
+
+  const brandTitle = settings?.storeNameAr || 'VOLTIC';
+  const brandSub = isRtl
+    ? settings?.brandSubAr || t.brandSub
+    : settings?.brandSubEn || t.brandSub;
 
   const scrollToSection = (id: string) => {
     setIsMenuOpen(false);
@@ -101,10 +110,10 @@ export const Header: React.FC<HeaderProps> = ({
               className="inline-block group text-decoration-none"
             >
               <span className="text-2xl sm:text-3xl font-black tracking-[4px] sm:tracking-[6px] text-gold-gradient block leading-none select-none font-['Cinzel',sans-serif]">
-                VOLTIC
+                {brandTitle}
               </span>
               <span className="text-[9px] sm:text-[10px] tracking-[2px] sm:tracking-[3px] text-[var(--text-muted)] group-hover:text-[#c9a84c] transition-colors block mt-1 font-semibold uppercase">
-                {t.brandSub}
+                {brandSub}
               </span>
             </a>
           </div>
@@ -322,9 +331,26 @@ export const Header: React.FC<HeaderProps> = ({
 
             </div>
 
-            {/* Drawer Footer */}
-            <div className="pt-2.5 border-t border-[#c9a84c]/20 text-center flex-shrink-0">
-              <p className="text-[9.5px] tracking-[1.5px] text-[var(--text-muted)] font-semibold uppercase">
+            {/* Drawer Footer with Secret Admin Dot to the LEFT of VOLTIC */}
+            <div
+              className="pt-2.5 border-t border-[#c9a84c]/20 text-center flex-shrink-0 flex items-center justify-center gap-2"
+              style={{ direction: 'ltr' }}
+            >
+              {/* Secret Admin Dot exactly where indicated by the orange arrow in the user's screenshot */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  if (onOpenAdmin) {
+                    onOpenAdmin();
+                  }
+                }}
+                title="VOLTIC"
+                className="w-2.5 h-2.5 rounded-full bg-[#c9a84c]/40 hover:bg-[#c9a84c] hover:scale-125 transition-all opacity-50 hover:opacity-100 cursor-pointer flex-shrink-0"
+                aria-label="Admin Control Panel"
+              />
+
+              <p className="text-[9.5px] tracking-[1.5px] text-[var(--text-muted)] font-semibold uppercase select-none">
                 VOLTIC • LUXURY MEN FRAGRANCES
               </p>
             </div>
