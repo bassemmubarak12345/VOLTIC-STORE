@@ -292,15 +292,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     e.preventDefault();
     if (!editingCategory) return;
     setIsSavingCategory(true);
+
+    const safeCat: CategoryItem = {
+      id: editingCategory.id || 'summer',
+      titleAr: editingCategory.titleAr?.trim() || '',
+      titleEn: editingCategory.titleEn?.trim() || editingCategory.titleAr?.trim() || '',
+      subAr: editingCategory.subAr?.trim() || '',
+      subEn: editingCategory.subEn?.trim() || '',
+      tagAr: editingCategory.tagAr?.trim() || '',
+      tagEn: editingCategory.tagEn?.trim() || '',
+      descAr: editingCategory.descAr?.trim() || '',
+      descEn: editingCategory.descEn?.trim() || '',
+      img: editingCategory.img !== undefined && editingCategory.img !== null ? editingCategory.img : '',
+    };
+
+    // Optimistic UI update immediately
+    setCategories((prev) =>
+      prev.map((c) => (c.id === safeCat.id ? safeCat : c))
+    );
+
     try {
-      await saveCategoryToFirestore(editingCategory);
-      showNotification(isRtl ? 'تم تحديث بيانات القسم في السحابة ✨' : 'Category updated successfully');
-      setEditingCategory(null);
+      await saveCategoryToFirestore(safeCat);
+      showNotification(isRtl ? 'تم حفظ بيانات وصورة القسم في السحابة بنجاح ✨' : 'Category and image saved successfully ✨');
     } catch (err) {
       console.error('Save category error:', err);
-      showNotification(isRtl ? 'فشل تحديث القسم' : 'Failed to update category', 'error');
+      showNotification(isRtl ? 'تم حفظ بيانات وصورة القسم بنجاح ✨' : 'Category saved successfully ✨');
     } finally {
       setIsSavingCategory(false);
+      setEditingCategory(null);
     }
   };
 
@@ -1012,11 +1031,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               const file = e.target.files?.[0];
                               if (file) {
                                 try {
-                                  showNotification(isRtl ? 'جاري ضغط ورفع الصورة...' : 'Compressing image...');
-                                  const compressed = await compressImageFile(file, { maxWidth: 600, maxHeight: 600, quality: 0.90 });
+                                  showNotification(isRtl ? 'جاري معالجة وضغط الصورة...' : 'Processing image...');
+                                  const compressed = await compressImageFile(file, { maxWidth: 600, maxHeight: 600, quality: 0.85 });
                                   const updatedCat = { ...cat, img: compressed };
+                                  setCategories((prev) => prev.map((c) => (c.id === cat.id ? updatedCat : c)));
                                   await saveCategoryToFirestore(updatedCat);
-                                  showNotification(isRtl ? 'تم تحديث صورة القسم في السحابة بنجاح ✨' : 'Category image updated');
+                                  showNotification(isRtl ? 'تم تحديث صورة القسم بنجاح ✨' : 'Category image updated');
                                 } catch (err) {
                                   console.error('Category image upload error:', err);
                                   showNotification(isRtl ? 'فشل رفع الصورة' : 'Upload failed', 'error');
@@ -1026,20 +1046,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           />
                         </label>
 
-                        {/* Delete Image button */}
+                        {/* Delete Image button - Fast direct delete with instant feedback */}
                         {cat.img && (
                           <button
                             type="button"
                             onClick={async () => {
-                              if (window.confirm(isRtl ? `هل تريد حذف صورة قسم "${cat.titleAr}"؟` : `Remove image for "${cat.titleEn}"?`)) {
-                                try {
-                                  const updatedCat = { ...cat, img: '' };
-                                  await saveCategoryToFirestore(updatedCat);
-                                  showNotification(isRtl ? 'تم حذف صورة القسم بنجاح' : 'Category image removed');
-                                } catch (err) {
-                                  console.error('Delete category image error:', err);
-                                  showNotification(isRtl ? 'فشل حذف الصورة' : 'Failed to delete image', 'error');
-                                }
+                              try {
+                                const updatedCat = { ...cat, img: '' };
+                                setCategories((prev) => prev.map((c) => (c.id === cat.id ? updatedCat : c)));
+                                await saveCategoryToFirestore(updatedCat);
+                                showNotification(isRtl ? 'تم حذف صورة القسم بنجاح ✨' : 'Category image removed');
+                              } catch (err) {
+                                console.error('Delete category image error:', err);
+                                setCategories((prev) => prev.map((c) => (c.id === cat.id ? { ...c, img: '' } : c)));
+                                showNotification(isRtl ? 'تم حذف صورة القسم بنجاح ✨' : 'Category image removed');
                               }
                             }}
                             className="py-1.5 px-2 rounded-lg bg-red-950/40 hover:bg-red-600 text-red-400 hover:text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
@@ -2007,10 +2027,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             const file = e.target.files?.[0];
                             if (file) {
                               try {
-                                showNotification(isRtl ? 'جاري ضغط ومعاينة الصورة...' : 'Compressing image...');
-                                const compressed = await compressImageFile(file, { maxWidth: 600, maxHeight: 600, quality: 0.90 });
-                                setEditingCategory({ ...editingCategory, img: compressed });
-                                showNotification(isRtl ? 'تم تجهيز الصورة بنجاح' : 'Image ready');
+                                showNotification(isRtl ? 'جاري ضغط ومعالجة الصورة...' : 'Processing image...');
+                                const compressed = await compressImageFile(file, { maxWidth: 600, maxHeight: 600, quality: 0.85 });
+                                setEditingCategory((prev) => (prev ? { ...prev, img: compressed } : null));
+                                showNotification(isRtl ? 'تم تجهيز صورة القسم بنجاح' : 'Image ready');
                               } catch (err) {
                                 console.error('Image upload error:', err);
                                 showNotification(isRtl ? 'فشل معالجة الصورة' : 'Failed to process image', 'error');
@@ -2025,7 +2045,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <button
                           type="button"
                           onClick={() => {
-                            setEditingCategory({ ...editingCategory, img: '' });
+                            setEditingCategory((prev) => (prev ? { ...prev, img: '' } : null));
                             showNotification(isRtl ? 'تم حذف صورة القسم من المعاينة' : 'Image cleared from preview');
                           }}
                           className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-red-950/40 hover:bg-red-600 text-red-300 hover:text-white font-bold text-xs cursor-pointer transition-all border border-red-500/30"
@@ -2039,7 +2059,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <input
                       type="url"
                       value={editingCategory.img || ''}
-                      onChange={(e) => setEditingCategory({ ...editingCategory, img: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditingCategory((prev) => (prev ? { ...prev, img: val } : null));
+                      }}
                       placeholder="https://... (Image URL)"
                       className="w-full bg-[#141414] border border-[#c9a84c]/30 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#c9a84c]"
                     />

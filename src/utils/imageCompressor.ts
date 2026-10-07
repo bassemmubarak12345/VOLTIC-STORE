@@ -1,13 +1,13 @@
 /**
  * High-Fidelity Client-Side Image Compressor
- * Resizes large images to optimal crisp dimensions and compresses to WebP/JPEG
- * without perceptible quality loss, ensuring blazing fast Firestore sync and page speed.
+ * Resizes images to crisp optimal dimensions and compresses to WebP/JPEG
+ * ensuring instant Firestore cloud synchronization and blistering fast load times.
  */
 
 export interface CompressionOptions {
   maxWidth?: number;
   maxHeight?: number;
-  quality?: number; // 0.1 to 1.0 (default 0.88)
+  quality?: number; // 0.1 to 1.0 (default 0.85)
   format?: 'image/webp' | 'image/jpeg';
 }
 
@@ -17,66 +17,85 @@ export const compressImageFile = (
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     const {
-      maxWidth = 1200,
-      maxHeight = 1200,
-      quality = 0.88,
+      maxWidth = 800,
+      maxHeight = 800,
+      quality = 0.85,
       format = 'image/webp',
     } = options;
+
+    if (!file) {
+      reject(new Error('No file provided for compression'));
+      return;
+    }
 
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Failed to read image file'));
     reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (!result) {
+        reject(new Error('Empty image result'));
+        return;
+      }
+
       const img = new Image();
-      img.onerror = () => reject(new Error('Failed to decode image'));
+      img.onerror = () => {
+        // If image object fails to decode, resolve raw data URL as fallback
+        resolve(result);
+      };
       img.onload = () => {
-        let { width, height } = img;
-
-        // Maintain exact aspect ratio
-        if (width > maxWidth || height > maxHeight) {
-          if (width / height > maxWidth / maxHeight) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          } else {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(event.target?.result as string);
-          return;
-        }
-
-        // High quality rendering
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-
-        // White background for transparent PNG converted to JPEG/WebP
-        ctx.fillStyle = '#141414';
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.drawImage(img, 0, 0, width, height);
-
         try {
-          // Check webp support
-          const compressedDataUrl = canvas.toDataURL(format, quality);
-          if (compressedDataUrl.startsWith(`data:${format}`)) {
-            resolve(compressedDataUrl);
-          } else {
-            // Fallback to JPEG
-            resolve(canvas.toDataURL('image/jpeg', quality));
+          let { width, height } = img;
+
+          // Maintain aspect ratio while scaling within max bounds
+          if (width > maxWidth || height > maxHeight) {
+            if (width / height > maxWidth / maxHeight) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          // Ensure minimum dimensions
+          width = Math.max(1, width);
+          height = Math.max(1, height);
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d', { alpha: true });
+          if (!ctx) {
+            resolve(result);
+            return;
+          }
+
+          // High quality rendering
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
+          // Draw image
+          ctx.drawImage(img, 0, 0, width, height);
+
+          try {
+            // Check WebP support
+            const compressedDataUrl = canvas.toDataURL(format, quality);
+            if (compressedDataUrl && compressedDataUrl.startsWith(`data:${format}`)) {
+              resolve(compressedDataUrl);
+            } else {
+              // Fallback to high quality JPEG
+              resolve(canvas.toDataURL('image/jpeg', quality));
+            }
+          } catch {
+            resolve(canvas.toDataURL('image/jpeg', 0.82));
           }
         } catch {
-          resolve(canvas.toDataURL('image/jpeg', 0.85));
+          resolve(result);
         }
       };
 
-      img.src = event.target?.result as string;
+      img.src = result;
     };
 
     reader.readAsDataURL(file);

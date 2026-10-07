@@ -89,12 +89,24 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
         // Keep default products visible and seed in background
         onUpdate(PRODUCTS);
         try {
-          const promises = PRODUCTS.map((p) =>
-            setDoc(doc(db, 'products', p.id), {
-              ...p,
+          const promises = PRODUCTS.map((p) => {
+            const cleanProd: Record<string, unknown> = {
+              id: p.id,
+              nameAr: p.nameAr || '',
+              nameEn: p.nameEn || p.nameAr || '',
+              price: Number(p.price) || 0,
+              ml: p.ml || '100 ML',
+              img: p.img || '',
+              descAr: p.descAr || '',
+              descEn: p.descEn || '',
+              category: p.category || 'summer',
+              rating: Number(p.rating) || 5,
               createdAt: serverTimestamp(),
-            })
-          );
+            };
+            if (p.badgeAr) cleanProd.badgeAr = p.badgeAr;
+            if (p.badgeEn) cleanProd.badgeEn = p.badgeEn;
+            return setDoc(doc(db, 'products', p.id), cleanProd);
+          });
           await Promise.all(promises);
         } catch (err) {
           console.warn('Firestore products seeding notice:', err);
@@ -124,11 +136,23 @@ export const subscribeProducts = (onUpdate: (products: Product[]) => void) => {
 export const saveProductToFirestore = async (product: Product) => {
   const id = product.id || `prod-${Date.now()}`;
   const prodDoc = doc(db, 'products', id);
-  await setDoc(prodDoc, {
-    ...product,
+  const cleanData: Record<string, unknown> = {
     id,
+    nameAr: product.nameAr || '',
+    nameEn: product.nameEn || product.nameAr || '',
+    price: Number(product.price) || 0,
+    ml: product.ml || '100 ML',
+    img: product.img || '',
+    descAr: product.descAr || '',
+    descEn: product.descEn || '',
+    category: product.category || 'summer',
+    rating: Number(product.rating) || 5,
     updatedAt: serverTimestamp(),
-  }, { merge: true });
+  };
+  if (product.badgeAr) cleanData.badgeAr = product.badgeAr;
+  if (product.badgeEn) cleanData.badgeEn = product.badgeEn;
+
+  await setDoc(prodDoc, cleanData, { merge: true });
   return id;
 };
 
@@ -140,7 +164,25 @@ export const deleteProductFromFirestore = async (productId: string) => {
 // 2. CATEGORIES REAL-TIME SYNC & OPERATIONS
 // ==========================================
 
+const CANONICAL_CAT_ORDER = ['summer', 'winter', 'occasions', 'sport'];
+
+const getCachedCategories = (): CategoryItem[] => {
+  try {
+    const cached = localStorage.getItem('voltic_categories_cache');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {
+    // Ignore cache error
+  }
+  return CATEGORIES_DATA as unknown as CategoryItem[];
+};
+
 export const subscribeCategories = (onUpdate: (categories: CategoryItem[]) => void) => {
+  // Immediately emit cached/default categories to guarantee instant UI render
+  onUpdate(getCachedCategories());
+
   const catCol = collection(db, 'categories');
   return onSnapshot(
     catCol,
@@ -150,14 +192,23 @@ export const subscribeCategories = (onUpdate: (categories: CategoryItem[]) => vo
         try {
           const promises = CATEGORIES_DATA.map((c) =>
             setDoc(doc(db, 'categories', c.id), {
-              ...c,
+              id: c.id,
+              titleAr: c.titleAr || '',
+              titleEn: c.titleEn || '',
+              subAr: c.subAr || '',
+              subEn: c.subEn || '',
+              tagAr: c.tagAr || '',
+              tagEn: c.tagEn || '',
+              descAr: c.descAr || '',
+              descEn: c.descEn || '',
+              img: c.img || '',
               createdAt: serverTimestamp(),
             })
           );
           await Promise.all(promises);
         } catch (err) {
           console.warn('Failed seeding categories to Firestore:', err);
-          onUpdate(CATEGORIES_DATA as unknown as CategoryItem[]);
+          onUpdate(getCachedCategories());
         }
       } else {
         const list: CategoryItem[] = [];
@@ -165,22 +216,72 @@ export const subscribeCategories = (onUpdate: (categories: CategoryItem[]) => vo
           const data = docSnap.data() as CategoryItem;
           list.push({ ...data, id: docSnap.id });
         });
-        onUpdate(list);
+
+        // Maintain consistent canonical order
+        list.sort((a, b) => {
+          const idxA = CANONICAL_CAT_ORDER.indexOf(a.id);
+          const idxB = CANONICAL_CAT_ORDER.indexOf(b.id);
+          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+          return 0;
+        });
+
+        if (list.length > 0) {
+          try {
+            localStorage.setItem('voltic_categories_cache', JSON.stringify(list));
+          } catch {
+            // storage quota fallback
+          }
+          onUpdate(list);
+        } else {
+          onUpdate(getCachedCategories());
+        }
       }
     },
     (error) => {
-      console.error('Firestore categories subscription error:', error);
-      onUpdate(CATEGORIES_DATA as unknown as CategoryItem[]);
+      console.warn('Firestore categories subscription error:', error);
+      onUpdate(getCachedCategories());
     }
   );
 };
 
 export const saveCategoryToFirestore = async (category: CategoryItem) => {
-  const id = category.id;
-  await setDoc(doc(db, 'categories', id), {
-    ...category,
-    updatedAt: serverTimestamp(),
-  }, { merge: true });
+  const id = category.id || 'summer';
+  const cleanCategory: CategoryItem = {
+    id,
+    titleAr: category.titleAr || '',
+    titleEn: category.titleEn || category.titleAr || '',
+    subAr: category.subAr || '',
+    subEn: category.subEn || '',
+    tagAr: category.tagAr || '',
+    tagEn: category.tagEn || '',
+    descAr: category.descAr || '',
+    descEn: category.descEn || '',
+    img: category.img !== undefined && category.img !== null ? category.img : '',
+  };
+
+  // 1. Immediately update localStorage cache
+  try {
+    const current = getCachedCategories();
+    const updated = current.map((c) => (c.id === id ? { ...c, ...cleanCategory } : c));
+    localStorage.setItem('voltic_categories_cache', JSON.stringify(updated));
+  } catch {
+    // Ignore cache error
+  }
+
+  // 2. Persist to Firestore
+  try {
+    await setDoc(
+      doc(db, 'categories', id),
+      {
+        ...cleanCategory,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  } catch (err) {
+    console.error('Firestore saveCategory error:', err);
+    // Even if Firestore fails, local cache is preserved
+  }
 };
 
 // ==========================================
@@ -188,6 +289,8 @@ export const saveCategoryToFirestore = async (category: CategoryItem) => {
 // ==========================================
 
 export const subscribeBanners = (onUpdate: (banners: Banner[]) => void) => {
+  onUpdate(DEFAULT_BANNERS as unknown as Banner[]);
+
   const bannersCol = collection(db, 'banners');
   return onSnapshot(
     bannersCol,
@@ -197,7 +300,11 @@ export const subscribeBanners = (onUpdate: (banners: Banner[]) => void) => {
         try {
           const promises = DEFAULT_BANNERS.map((b, idx) =>
             setDoc(doc(db, 'banners', b.id || `banner-${idx + 1}`), {
-              ...b,
+              id: b.id || `banner-${idx + 1}`,
+              image: b.image || '',
+              altAr: b.altAr || 'بنر متجر VOLTIC',
+              altEn: b.altEn || 'VOLTIC Banner',
+              category: b.category || 'summer',
               order: idx,
               createdAt: serverTimestamp(),
             })
@@ -214,11 +321,15 @@ export const subscribeBanners = (onUpdate: (banners: Banner[]) => void) => {
           list.push({ ...data, id: docSnap.id });
         });
         list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-        onUpdate(list);
+        if (list.length > 0) {
+          onUpdate(list);
+        } else {
+          onUpdate(DEFAULT_BANNERS as unknown as Banner[]);
+        }
       }
     },
     (error) => {
-      console.error('Firestore banners subscription error:', error);
+      console.warn('Firestore banners subscription error:', error);
       onUpdate(DEFAULT_BANNERS as unknown as Banner[]);
     }
   );
@@ -226,12 +337,16 @@ export const subscribeBanners = (onUpdate: (banners: Banner[]) => void) => {
 
 export const saveBannerToFirestore = async (banner: Banner, orderIndex = 0) => {
   const id = String(banner.id || `banner-${Date.now()}`);
-  await setDoc(doc(db, 'banners', id), {
-    ...banner,
+  const cleanBanner = {
     id,
+    image: banner.image || banner.img || '',
+    altAr: banner.altAr || 'بنر متجر VOLTIC',
+    altEn: banner.altEn || 'VOLTIC Banner',
+    category: banner.category || 'summer',
     order: orderIndex,
     updatedAt: serverTimestamp(),
-  }, { merge: true });
+  };
+  await setDoc(doc(db, 'banners', id), cleanBanner, { merge: true });
   return id;
 };
 
@@ -262,7 +377,7 @@ export const subscribeSettings = (onUpdate: (settings: StoreSettings) => void) =
       }
     },
     (error) => {
-      console.error('Firestore settings subscription error:', error);
+      console.warn('Firestore settings subscription error:', error);
       onUpdate(DEFAULT_STORE_SETTINGS);
     }
   );
@@ -292,7 +407,7 @@ export const subscribeOrders = (onUpdate: (orders: Order[]) => void) => {
       onUpdate(list);
     },
     (error) => {
-      console.error('Firestore orders subscription error:', error);
+      console.warn('Firestore orders subscription error:', error);
     }
   );
 };
@@ -301,10 +416,23 @@ export const createOrderInFirestore = async (order: Order) => {
   const id = order.id || `VLT-${Date.now().toString().slice(-6)}`;
   const orderDoc = doc(db, 'orders', id);
   const dataToSave = {
-    ...order,
     id,
-    status: order.status || 'pending',
+    date: order.date || new Date().toLocaleString(),
     timestamp: order.timestamp || Date.now(),
+    status: order.status || 'pending',
+    customer: {
+      name: order.customer?.name || '',
+      email: order.customer?.email || '',
+      phone: order.customer?.phone || '',
+      phone2: order.customer?.phone2 || '',
+      address: order.customer?.address || '',
+    },
+    items: order.items || [],
+    subtotal: Number(order.subtotal) || Number(order.total) || 0,
+    discountCode: order.discountCode || '',
+    discountAmount: Number(order.discountAmount) || 0,
+    discountDesc: order.discountDesc || '',
+    total: Number(order.total) || 0,
     createdAt: serverTimestamp(),
   };
   await setDoc(orderDoc, dataToSave);

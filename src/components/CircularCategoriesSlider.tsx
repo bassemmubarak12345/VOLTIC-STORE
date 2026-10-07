@@ -53,13 +53,17 @@ export const CircularCategoriesSlider: React.FC<CircularCategoriesSliderProps> =
                         : 'p-[2px] bg-gradient-to-tr from-[#c9a84c]/60 via-[#e8c96d]/40 to-[#9a7830]/40 group-hover:scale-105 group-hover:shadow-[0_0_12px_rgba(201,168,76,0.35)]'
                     }`}
                   >
-                    <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden border-2 border-[var(--bg-page)] bg-[var(--bg-card)]">
-                      <img
-                        src={cat.img}
-                        alt={title}
-                        className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
-                        loading="lazy"
-                      />
+                    <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full overflow-hidden border-2 border-[var(--bg-page)] bg-[var(--bg-card)] flex items-center justify-center">
+                      {cat.img || CATEGORIES_DATA.find((c) => c.id === cat.id)?.img ? (
+                        <img
+                          src={cat.img || CATEGORIES_DATA.find((c) => c.id === cat.id)?.img}
+                          alt={title}
+                          className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span className="text-[#c9a84c] font-black text-sm">{title.slice(0, 2)}</span>
+                      )}
                     </div>
                   </div>
 
