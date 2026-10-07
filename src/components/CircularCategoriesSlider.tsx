@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Compass } from 'lucide-react';
 import { Language, CategoryItem } from '../types';
 import { TRANSLATIONS } from '../data/translations';
@@ -13,6 +13,7 @@ interface CircularCategoriesSliderProps {
 
 // 3 continuous cycles per track set to guarantee seamless looping on all screen sizes
 const CYCLES = [0, 1, 2];
+const CANONICAL_ORDER = ['summer', 'winter', 'sport', 'occasions'];
 
 export const CircularCategoriesSlider: React.FC<CircularCategoriesSliderProps> = ({
   language,
@@ -23,7 +24,18 @@ export const CircularCategoriesSlider: React.FC<CircularCategoriesSliderProps> =
   const isRtl = language === 'ar';
   const t = TRANSLATIONS[language];
 
-  const activeCats = categories && categories.length > 0 ? categories : (CATEGORIES_DATA as unknown as CategoryItem[]);
+  // Strictly enforce canonical order: summer -> winter -> sport -> occasions
+  const activeCats = useMemo(() => {
+    const source = categories && categories.length > 0 ? categories : (CATEGORIES_DATA as unknown as CategoryItem[]);
+    return [...source].sort((a, b) => {
+      const idxA = CANONICAL_ORDER.indexOf(a.id);
+      const idxB = CANONICAL_ORDER.indexOf(b.id);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return 0;
+    });
+  }, [categories]);
 
   // Render a full track set containing cycles of the categories + an elegant gap after each cycle
   const renderItemSet = (setKey: string) => (

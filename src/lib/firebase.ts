@@ -171,7 +171,16 @@ const getCachedCategories = (): CategoryItem[] => {
     const cached = localStorage.getItem('voltic_categories_cache');
     if (cached) {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return [...parsed].sort((a, b) => {
+          const idxA = CANONICAL_CAT_ORDER.indexOf(a.id);
+          const idxB = CANONICAL_CAT_ORDER.indexOf(b.id);
+          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+          if (idxA !== -1) return -1;
+          if (idxB !== -1) return 1;
+          return 0;
+        });
+      }
     }
   } catch {
     // Ignore cache error
