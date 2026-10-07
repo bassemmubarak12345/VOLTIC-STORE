@@ -56,8 +56,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   const TRENDING_SEARCHES = [
     { labelAr: 'عطور صيفية منعشة', labelEn: 'Fresh Summer', key: 'صيف' },
     { labelAr: 'عطور شتوية دافئة', labelEn: 'Warm Winter', key: 'شتو' },
-    { labelAr: 'عطور المناسبات الفاخرة', labelEn: 'Luxury Occasions', key: 'مناسب' },
     { labelAr: 'عطور رياضية حيوية', labelEn: 'Sport Fragrances', key: 'رياض' },
+    { labelAr: 'عطور المناسبات الفاخرة', labelEn: 'Luxury Occasions', key: 'مناسب' },
     { labelAr: 'عود ملكي', labelEn: 'Royal Oud', key: 'عود' },
     { labelAr: 'عنبر ومسك', labelEn: 'Amber & Musk', key: 'عنبر' },
     { labelAr: 'فانيلا فاخرة', labelEn: 'Vanilla', key: 'فانيلا' },
@@ -69,8 +69,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({
     { id: 'all', labelAr: 'جميع العطور', labelEn: 'All Perfumes' },
     { id: 'summer', labelAr: 'عطور صيفية', labelEn: 'Summer' },
     { id: 'winter', labelAr: 'عطور شتوية', labelEn: 'Winter' },
-    { id: 'occasions', labelAr: 'عطور المناسبات', labelEn: 'Occasions' },
     { id: 'sport', labelAr: 'عطور رياضية', labelEn: 'Sport' },
+    { id: 'occasions', labelAr: 'عطور المناسبات', labelEn: 'Occasions' },
   ];
 
   // Lock body scroll when open and focus input

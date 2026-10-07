@@ -682,8 +682,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <option value="all">{isRtl ? 'جميع الأقسام' : 'All Categories'}</option>
                     <option value="summer">{isRtl ? 'عطور صيفية' : 'Summer Fragrances'}</option>
                     <option value="winter">{isRtl ? 'عطور شتوية' : 'Winter Fragrances'}</option>
-                    <option value="occasions">{isRtl ? 'عطور المناسبات' : 'Occasions Fragrances'}</option>
                     <option value="sport">{isRtl ? 'عطور رياضية' : 'Sport Fragrances'}</option>
+                    <option value="occasions">{isRtl ? 'عطور المناسبات' : 'Occasions Fragrances'}</option>
                   </select>
                 </div>
               </div>
@@ -1513,8 +1513,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   >
                     <option value="summer">{isRtl ? 'عطور صيفية' : 'Summer'}</option>
                     <option value="winter">{isRtl ? 'عطور شتوية' : 'Winter'}</option>
-                    <option value="occasions">{isRtl ? 'عطور المناسبات' : 'Occasions'}</option>
                     <option value="sport">{isRtl ? 'عطور رياضية' : 'Sport'}</option>
+                    <option value="occasions">{isRtl ? 'عطور المناسبات' : 'Occasions'}</option>
                   </select>
                 </div>
 
@@ -1910,8 +1910,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 >
                   <option value="summer">{isRtl ? 'عطور صيفية' : 'Summer'}</option>
                   <option value="winter">{isRtl ? 'عطور شتوية' : 'Winter'}</option>
-                  <option value="occasions">{isRtl ? 'عطور المناسبات' : 'Occasions'}</option>
                   <option value="sport">{isRtl ? 'عطور رياضية' : 'Sport'}</option>
+                  <option value="occasions">{isRtl ? 'عطور المناسبات' : 'Occasions'}</option>
                 </select>
               </div>
 

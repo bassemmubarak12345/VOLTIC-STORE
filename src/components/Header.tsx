@@ -288,21 +288,6 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={() => {
                     setIsMenuOpen(false);
                     if (onSelectCategory) {
-                      onSelectCategory('occasions');
-                    } else {
-                      scrollToSection('occasions');
-                    }
-                  }}
-                  className="flex items-center justify-between py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold text-[var(--text-main)] hover:bg-[#c9a84c]/10 hover:text-[#c9a84c] transition-colors text-start cursor-pointer"
-                >
-                  <span>{t.navOccasions}</span>
-                  {isRtl ? <ChevronLeft className="w-3.5 h-3.5 text-[var(--text-muted)]" /> : <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)]" />}
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    if (onSelectCategory) {
                       onSelectCategory('sport');
                     } else {
                       scrollToSection('sport');
@@ -311,6 +296,21 @@ export const Header: React.FC<HeaderProps> = ({
                   className="flex items-center justify-between py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold text-[var(--text-main)] hover:bg-[#c9a84c]/10 hover:text-[#c9a84c] transition-colors text-start cursor-pointer"
                 >
                   <span>{t.navSport}</span>
+                  {isRtl ? <ChevronLeft className="w-3.5 h-3.5 text-[var(--text-muted)]" /> : <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)]" />}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    if (onSelectCategory) {
+                      onSelectCategory('occasions');
+                    } else {
+                      scrollToSection('occasions');
+                    }
+                  }}
+                  className="flex items-center justify-between py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold text-[var(--text-main)] hover:bg-[#c9a84c]/10 hover:text-[#c9a84c] transition-colors text-start cursor-pointer"
+                >
+                  <span>{t.navOccasions}</span>
                   {isRtl ? <ChevronLeft className="w-3.5 h-3.5 text-[var(--text-muted)]" /> : <ChevronRight className="w-3.5 h-3.5 text-[var(--text-muted)]" />}
                 </button>
 

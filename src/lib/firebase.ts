@@ -164,7 +164,7 @@ export const deleteProductFromFirestore = async (productId: string) => {
 // 2. CATEGORIES REAL-TIME SYNC & OPERATIONS
 // ==========================================
 
-const CANONICAL_CAT_ORDER = ['summer', 'winter', 'occasions', 'sport'];
+const CANONICAL_CAT_ORDER = ['summer', 'winter', 'sport', 'occasions'];
 
 const getCachedCategories = (): CategoryItem[] => {
   try {

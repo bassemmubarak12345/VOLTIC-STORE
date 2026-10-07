@@ -78,16 +78,16 @@ export const Footer: React.FC<FooterProps> = ({
             {t.navWinter}
           </button>
           <button
-            onClick={() => handleCategoryClick('occasions')}
-            className="hover:text-[#c9a84c] transition-colors cursor-pointer tracking-wide"
-          >
-            {t.navOccasions}
-          </button>
-          <button
             onClick={() => handleCategoryClick('sport')}
             className="hover:text-[#c9a84c] transition-colors cursor-pointer tracking-wide"
           >
             {t.navSport}
+          </button>
+          <button
+            onClick={() => handleCategoryClick('occasions')}
+            className="hover:text-[#c9a84c] transition-colors cursor-pointer tracking-wide"
+          >
+            {t.navOccasions}
           </button>
           <button
             onClick={onOpenOrders}

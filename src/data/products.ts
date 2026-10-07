@@ -593,18 +593,6 @@ export const CATEGORIES_DATA = [
     img: 'https://images.pexels.com/photos/11517300/pexels-photo-11517300.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=400&w=400'
   },
   {
-    id: 'occasions' as const,
-    titleAr: 'عطور المناسبات',
-    titleEn: 'Occasions Fragrances',
-    subAr: 'سهرات وهيبة',
-    subEn: 'Gala & Prestige',
-    tagAr: '✦ تشكيلة المناسبات',
-    tagEn: '✦ OCCASIONS COLLECTION',
-    descAr: 'لكل لحظة فارقة في حياتك — عطور تُخلّد الذكريات وتُكمل الأثر',
-    descEn: 'For life-defining milestones — perfumes that immortalize memories and craft an unforgettable aura.',
-    img: 'https://images.pexels.com/photos/14402569/pexels-photo-14402569.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=400&w=400'
-  },
-  {
     id: 'sport' as const,
     titleAr: 'عطور رياضية',
     titleEn: 'Sport Fragrances',
@@ -615,5 +603,17 @@ export const CATEGORIES_DATA = [
     descAr: 'قوة وحيوية لا تتوقف — عطور تواكبك من الملعب إلى الحياة اليومية بشكل مثالي',
     descEn: 'Non-stop power and stamina — versatile perfumes keeping pace with every workout and milestone.',
     img: 'https://images.pexels.com/photos/35865087/pexels-photo-35865087.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=400&w=400'
+  },
+  {
+    id: 'occasions' as const,
+    titleAr: 'عطور المناسبات',
+    titleEn: 'Occasions Fragrances',
+    subAr: 'سهرات وهيبة',
+    subEn: 'Gala & Prestige',
+    tagAr: '✦ تشكيلة المناسبات',
+    tagEn: '✦ OCCASIONS COLLECTION',
+    descAr: 'لكل لحظة فارقة في حياتك — عطور تُخلّد الذكريات وتُكمل الأثر',
+    descEn: 'For life-defining milestones — perfumes that immortalize memories and craft an unforgettable aura.',
+    img: 'https://images.pexels.com/photos/14402569/pexels-photo-14402569.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=400&w=400'
   }
 ];
