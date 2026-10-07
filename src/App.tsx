@@ -521,7 +521,6 @@ export default function App() {
         <BannerSlider
           language={language}
           banners={banners}
-          onSelectCategory={(cat) => handleSelectCategory(cat)}
         />
 
         {/* ===== CIRCULAR CATEGORIES SLIDER (Real-Time Cloud Sync) ===== */}

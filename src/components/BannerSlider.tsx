@@ -269,7 +269,6 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
             {activeBanners.map((banner, index) => {
               const isActive = index === currentIndex;
               const bannerId = banner.id || `banner-${index}`;
-              const targetCategory = banner.category || 'summer';
               return (
                 <div
                   key={bannerId}
@@ -283,16 +282,11 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
                   <img
                     src={banner.image}
                     alt={isRtl ? banner.altAr : banner.altEn}
-                    className="w-full h-auto object-contain block mx-auto cursor-pointer transition-transform duration-500 group-hover:scale-[1.01]"
+                    className="w-full h-auto object-contain block mx-auto select-none pointer-events-none transition-transform duration-500 group-hover:scale-[1.01]"
                     loading={index === 0 ? 'eager' : 'lazy'}
                     decoding={index === 0 ? 'sync' : 'async'}
                     referrerPolicy="no-referrer"
                     onError={() => handleImageError(bannerId, banner.image)}
-                    onClick={() => {
-                      if (onSelectCategory) {
-                        onSelectCategory(targetCategory);
-                      }
-                    }}
                   />
                 </div>
               );
