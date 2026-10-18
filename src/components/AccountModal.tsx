@@ -80,6 +80,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
+  const [notRegisteredEmail, setNotRegisteredEmail] = useState('');
 
   // Sync state whenever modal opens
   useEffect(() => {
@@ -90,6 +91,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       setErrorMsg('');
       setSuccessMsg('');
       setEmailAlreadyExists(false);
+      setNotRegisteredEmail('');
     }
   }, [isOpen, initialTab]);
 
@@ -103,6 +105,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     setErrorMsg('');
     setSuccessMsg('');
     setEmailAlreadyExists(false);
+    setNotRegisteredEmail('');
 
     if (!name.trim() || !email.trim() || !phone.trim() || !address.trim() || password.length < 6) {
       setErrorMsg(
@@ -114,13 +117,20 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     }
 
     setIsLoading(true);
+    const cleanEmail = email.trim().toLowerCase();
 
     try {
-      // 1. Check if email exists first in customers collection
-      const existingCustomer = await checkCustomerByEmail(email.trim());
+      // 1. Check if email is already registered in customers cloud collection or Auth
+      const existingCustomer = await checkCustomerByEmail(cleanEmail);
       if (existingCustomer) {
         setEmailAlreadyExists(true);
-        setErrorMsg('هذا البريد الإلكتروني مسجل من قبل، من فضلك سجل دخولك');
+        setLoginEmail(cleanEmail);
+        setView('login');
+        setErrorMsg(
+          isRtl
+            ? 'هذا البريد الإلكتروني مسجل لدينا بالفعل. تم تحويلك لصفحة تسجيل الدخول، يرجى كتابة كلمة المرور.'
+            : 'This email is already registered with us. Transferred to Sign In, please enter your password.'
+        );
         setIsLoading(false);
         return;
       }
@@ -128,7 +138,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       // 2. Create in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        email.trim(),
+        cleanEmail,
         password.trim()
       );
       const uid = userCredential.user.uid;
@@ -137,22 +147,31 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       const customerData: User = {
         uid,
         name: name.trim(),
-        email: email.trim().toLowerCase(),
+        email: cleanEmail,
         phone: phone.trim(),
         phone2: phone2.trim() || undefined,
         address: address.trim(),
         createdAt: new Date().toISOString(),
       };
 
-      await saveCustomerProfile(uid, customerData);
+      try {
+        await saveCustomerProfile(uid, customerData);
+      } catch (saveErr) {
+        console.warn('saveCustomerProfile cloud sync notice:', saveErr);
+      }
 
-      // 4. Update local app state
+      // 4. Update local app state and cache
+      try {
+        localStorage.setItem('voltic_user', JSON.stringify(customerData));
+      } catch {
+        // quota fallback
+      }
       onSaveUser(customerData);
 
       setSuccessMsg(
         isRtl
-          ? 'تم إنشاء حسابك في VOLTIC بنجاح! أهلاً بك ✨'
-          : 'Your VOLTIC account has been created successfully! Welcome ✨'
+          ? 'تم إنشاء حسابك في VOLTIC بنجاح! تم تسجيل دخولك للموقع تلقائياً ✨'
+          : 'Your VOLTIC account has been created successfully! Logged in automatically ✨'
       );
 
       setTimeout(() => {
@@ -160,13 +179,19 @@ export const AccountModal: React.FC<AccountModalProps> = ({
           onProceedCheckoutAfterAuth();
         }
         onClose();
-      }, 1200);
+      }, 1000);
     } catch (err: unknown) {
       console.error('Customer registration error:', err);
       const errorObj = err as { code?: string; message?: string };
       if (errorObj?.code === 'auth/email-already-in-use') {
         setEmailAlreadyExists(true);
-        setErrorMsg('هذا البريد الإلكتروني مسجل من قبل، من فضلك سجل دخولك');
+        setLoginEmail(cleanEmail);
+        setView('login');
+        setErrorMsg(
+          isRtl
+            ? 'هذا البريد الإلكتروني مسجل لدينا بالفعل. تم تحويلك لصفحة تسجيل الدخول، يرجى كتابة كلمة المرور.'
+            : 'This email is already registered with us. Transferred to Sign In, please enter your password.'
+        );
       } else {
         setErrorMsg(
           isRtl
@@ -187,6 +212,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     setErrorMsg('');
     setSuccessMsg('');
     setEmailAlreadyExists(false);
+    setNotRegisteredEmail('');
 
     if (!loginEmail.trim() || !loginPassword) {
       setErrorMsg(isRtl ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور' : 'Please enter email and password');
@@ -210,11 +236,16 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       const activeUser: User = customer || {
         uid,
         name: userCredential.user.displayName || loginEmail.split('@')[0],
-        email: loginEmail.trim(),
+        email: loginEmail.trim().toLowerCase(),
         phone: '',
         address: '',
       };
 
+      try {
+        localStorage.setItem('voltic_user', JSON.stringify(activeUser));
+      } catch {
+        // quota fallback
+      }
       onSaveUser(activeUser);
 
       setSuccessMsg(
@@ -243,6 +274,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
+    setNotRegisteredEmail('');
 
     const cleanEmail = resetEmail.trim().toLowerCase();
     if (!cleanEmail) {
@@ -253,9 +285,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     setIsLoading(true);
 
     try {
-      // 1. Check if email exists in customers cloud collection
+      // 1. Check if email exists in customers cloud collection or Firebase Auth
       const customer = await checkCustomerByEmail(cleanEmail);
       if (!customer) {
+        setNotRegisteredEmail(cleanEmail);
         setErrorMsg(
           isRtl
             ? 'هذا البريد الإلكتروني غير مسجل لدينا في المتجر. يرجى إنشاء حساب جديد أولاً.'
@@ -276,10 +309,11 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       console.error('Customer forgot password error:', err);
       const errorObj = err as { code?: string; message?: string };
       if (errorObj?.code === 'auth/user-not-found') {
+        setNotRegisteredEmail(cleanEmail);
         setErrorMsg(
           isRtl
-            ? 'هذا البريد الإلكتروني غير مسجل لدينا في المتجر.'
-            : 'This email is not registered in our system.'
+            ? 'هذا البريد الإلكتروني غير مسجل لدينا في المتجر. يرجى إنشاء حساب جديد أولاً.'
+            : 'This email is not registered with us. Please create a new account.'
         );
       } else if (errorObj?.code === 'auth/invalid-email') {
         setErrorMsg(
@@ -356,33 +390,57 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               <span className="font-bold">{errorMsg}</span>
             </div>
 
-            {/* If Email already exists: Show action buttons as requested */}
+            {/* If Email is NOT registered: Provide direct 1-click action to Register & enter the store */}
+            {notRegisteredEmail && (
+              <div className="pt-2 border-t border-red-500/20">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView('register');
+                    setEmail(notRegisteredEmail);
+                    setErrorMsg('');
+                    setNotRegisteredEmail('');
+                  }}
+                  className="w-full py-2 px-3 rounded-lg bg-[#c9a84c] hover:bg-[#e8c96d] text-black font-black text-xs text-center transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>
+                    {isRtl
+                      ? 'إنشاء حساب جديد بهذا البريد الآن والولوج للمتجر'
+                      : 'Create New Account with this Email Now'}
+                  </span>
+                </button>
+              </div>
+            )}
+
+            {/* If Email already exists: Show action buttons */}
             {emailAlreadyExists && (
-              <div className="pt-2 border-t border-red-500/20 flex items-center gap-2">
+              <div className="pt-2 border-t border-red-500/20 flex flex-col sm:flex-row items-center gap-2">
                 <button
                   type="button"
                   onClick={() => {
                     setView('login');
-                    setLoginEmail(email);
+                    setLoginEmail(email || loginEmail);
                     setErrorMsg('');
                     setEmailAlreadyExists(false);
                   }}
-                  className="flex-1 py-1.5 px-3 rounded-lg bg-[#c9a84c] hover:bg-[#e8c96d] text-black font-black text-xs text-center transition-all cursor-pointer"
+                  className="w-full py-2 px-3 rounded-lg bg-[#c9a84c] hover:bg-[#e8c96d] text-black font-black text-xs text-center transition-all cursor-pointer"
                 >
-                  {isRtl ? 'تسجيل دخول' : 'Sign In'}
+                  {isRtl ? 'تسجيل دخول بكلمة المرور' : 'Sign In with Password'}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => {
                     setView('forgot_password');
-                    setResetEmail(email);
+                    setResetEmail(email || loginEmail);
                     setErrorMsg('');
                     setEmailAlreadyExists(false);
                   }}
-                  className="flex-1 py-1.5 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-xs text-center transition-all cursor-pointer"
+                  className="w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-xs text-center transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  {isRtl ? 'نسيت كلمة المرور؟' : 'Forgot Password?'}
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>{isRtl ? 'نسيت كلمة المرور؟' : 'Forgot Password?'}</span>
                 </button>
               </div>
             )}

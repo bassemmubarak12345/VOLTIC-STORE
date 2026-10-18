@@ -505,6 +505,36 @@ export const getCustomerProfile = async (uid: string): Promise<User | null> => {
   return null;
 };
 
+export const checkEmailRegisteredInAuth = async (email: string): Promise<boolean> => {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail) return false;
+  try {
+    const probeAppName = 'volticAuthProbe';
+    const probeApp =
+      getApps().find((a) => a.name === probeAppName) ||
+      initializeApp(firebaseConfig, probeAppName);
+    const probeAuth = getAuth(probeApp);
+    const cred = await createUserWithEmailAndPassword(
+      probeAuth,
+      cleanEmail,
+      'Probe_Check_Pass_78942#$!'
+    );
+    // If account was successfully created, it means email was NOT previously registered
+    try {
+      await cred.user.delete();
+    } catch {
+      // deletion notice handled
+    }
+    return false;
+  } catch (err: unknown) {
+    const errorObj = err as { code?: string };
+    if (errorObj?.code === 'auth/email-already-in-use') {
+      return true; // Definitive proof of registration in Firebase Auth!
+    }
+    return false;
+  }
+};
+
 export const checkCustomerByEmail = async (email: string): Promise<User | null> => {
   const cleanEmail = email.trim().toLowerCase();
   if (!cleanEmail) return null;
@@ -545,6 +575,34 @@ export const checkCustomerByEmail = async (email: string): Promise<User | null> 
     }
   } catch {
     // Quota fallback
+  }
+
+  // 4. Check if registered in Firebase Auth (e.g. prior registration)
+  try {
+    const inAuth = await checkEmailRegisteredInAuth(cleanEmail);
+    if (inAuth) {
+      // Sync back to Firestore customers collection so future checks are immediate
+      const emailCustomerDoc = doc(db, 'customers', cleanEmail);
+      await setDoc(
+        emailCustomerDoc,
+        {
+          email: cleanEmail,
+          role: 'customer',
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      ).catch(() => {});
+
+      return {
+        uid: cleanEmail,
+        email: cleanEmail,
+        name: cleanEmail.split('@')[0],
+        phone: '',
+        address: '',
+      } as User;
+    }
+  } catch (err) {
+    console.warn('checkEmailRegisteredInAuth notice:', err);
   }
 
   return null;
