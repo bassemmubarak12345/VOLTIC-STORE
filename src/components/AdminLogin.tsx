@@ -13,8 +13,8 @@ import {
   EyeOff,
   Store,
 } from 'lucide-react';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
-import { auth, checkAdminEmail } from '../lib/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth, checkAdminEmail, sendVolticPasswordResetEmail } from '../lib/firebase';
 import { Language } from '../types';
 
 interface AdminLoginProps {
@@ -145,11 +145,11 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
         return;
       }
 
-      await sendPasswordResetEmail(auth, cleanEmail);
+      await sendVolticPasswordResetEmail(cleanEmail);
       setSuccessMsg(
         isRtl
-          ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني بنجاح.\n\n📌 تنبيه: يرجى تفقد صندوق الوارد (Inbox) أو مجلد الرسائل غير المرغوب فيها (Spam / Junk) في حال عدم ظهورها فوراً.'
-          : 'Password reset link sent successfully.\n\n📌 Note: Check your Inbox or Spam / Junk folder if not received immediately.'
+          ? 'تم إرسال رابط إعادة تعيين كلمة المرور باسم متجر (Voltic) إلى بريدك الإلكتروني بنجاح.\n\n📌 تنبيه: الرسالة مرسلة باسم المتجر الرسمي (Voltic). في حال وصولها في مجلد الرسائل غير المرغوب فيها (Spam / Junk)، يرجى الضغط على "ليس بريداً عشوائياً / Not Spam" حتى تصلك كافة الرسائل الإدارية في صندوق الوارد مباشرة.'
+          : 'Password reset link sent under (Voltic) store name to your email successfully.\n\n📌 Note: Sent under official name (Voltic). If found in Spam / Junk, please click "Not Spam" to ensure all administrator emails arrive directly in your Inbox.'
       );
     } catch (err: unknown) {
       console.error('Password reset error:', err);

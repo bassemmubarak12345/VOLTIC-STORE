@@ -320,6 +320,10 @@ export default function App() {
     } catch {
       // ignore
     }
+    const welcome = language === 'ar'
+      ? `أهلاً بك يا ${user.name} في VOLTIC ✨ نتمنى لك تجربة تسوق فاخرة وممتعة!`
+      : `Welcome to VOLTIC, ${user.name} ✨ Enjoy your luxury fragrance experience!`;
+    showToast(welcome);
   };
 
   const handleLogout = () => {
@@ -348,12 +352,15 @@ export default function App() {
         const p = products.find((prod) => prod.id === item.id);
         if (!p) return null;
         return {
+          id: p.id,
           name: language === 'ar' ? p.nameAr : p.nameEn,
           qty: item.qty,
           price: p.price,
+          img: p.img,
+          ml: p.ml,
         };
       })
-      .filter(Boolean) as { name: string; qty: number; price: number }[];
+      .filter(Boolean) as { id?: string; name: string; qty: number; price: number; img?: string; ml?: string }[];
 
     const subtotal = detailedItems.reduce((acc, i) => acc + i.price * i.qty, 0);
     const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
@@ -493,6 +500,8 @@ export default function App() {
         cartCount={cartCount}
         cartNotice={cartNotice}
         settings={settings}
+        currentUser={currentUser}
+        onLogout={handleLogout}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenAccount={() => {
@@ -596,6 +605,7 @@ export default function App() {
         onToggleTheme={handleToggleTheme}
         cartCount={cartCount}
         cartNotice={cartNotice}
+        currentUser={currentUser}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenAccount={() => setIsAccountOpen(true)}
         onScrollToHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -617,8 +627,8 @@ export default function App() {
 
       {/* ===== TOAST NOTIFICATION ===== */}
       {toastMessage && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-gradient-to-r from-[#c9a84c] to-[#9a7830] text-black font-extrabold text-xs shadow-2xl max-w-[90vw] text-center truncate pointer-events-none">
-          {toastMessage}
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-[#e8c96d] via-[#c9a84c] to-[#9a7830] text-black font-extrabold text-xs sm:text-sm shadow-2xl max-w-[92vw] sm:max-w-md text-center pointer-events-none animate-fadeIn flex items-center justify-center gap-2 border border-[#ffe082]/60">
+          <span className="leading-snug">{toastMessage}</span>
         </div>
       )}
 
@@ -674,6 +684,8 @@ export default function App() {
         onClose={() => setIsOrdersListOpen(false)}
         title={ordersModalTitle}
         language={language}
+        currentUser={currentUser}
+        products={products}
       />
 
       {/* ===== INSTANT SEARCH MODAL ===== */}

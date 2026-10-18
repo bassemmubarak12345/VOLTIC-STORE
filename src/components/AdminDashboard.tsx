@@ -49,6 +49,7 @@ import {
   deleteOrderFromFirestore,
   checkAdminEmail,
   registerAdminEmail,
+  sendVolticPasswordResetEmail,
 } from '../lib/firebase';
 import {
   signOut,
@@ -56,7 +57,6 @@ import {
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
-  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { Product, CategoryItem, Banner, Order, StoreSettings, Language } from '../types';
 import { compressImageFile } from '../utils/imageCompressor';
@@ -432,17 +432,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         setIsSendingReset(false);
         return;
       }
-      await sendPasswordResetEmail(auth, currentUser.email);
+      await sendVolticPasswordResetEmail(currentUser.email);
       showNotification(
         isRtl
-          ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك.\n(تفقد الوارد أو الرسائل غير المرغوب فيها Spam)'
-          : 'Password reset link sent to your email (Check Inbox/Spam)'
+          ? 'تم إرسال رابط إعادة تعيين كلمة المرور باسم متجر (Voltic) إلى بريدك بنجاح.\n(تفقد الوارد أو مجلد الرسائل غير المرغوب فيها Spam/Junk)'
+          : 'Password reset link sent under (Voltic) store name to your email (Check Inbox/Spam)'
       );
     } catch (err) {
       console.error('Password reset error:', err);
       showNotification(isRtl ? 'فشل إرسال الرابط' : 'Failed to send reset link', 'error');
     } finally {
       setIsSendingReset(false);
+    }
+  };
+
+  const [isSendingTestMail, setIsSendingTestMail] = useState(false);
+
+  const handleSendTestMail = async () => {
+    if (!currentUser?.email) return;
+    setIsSendingTestMail(true);
+    try {
+      await sendVolticPasswordResetEmail(currentUser.email);
+      showNotification(
+        isRtl
+          ? `تم إرسال بريد تجريبي باسم (Voltic) إلى بريدك (${currentUser.email}) بنجاح.`
+          : `Test email sent under (Voltic) name to (${currentUser.email}) successfully.`
+      );
+    } catch (err) {
+      console.error('Test email error:', err);
+      showNotification(isRtl ? 'فشل إرسال البريد التجريبي' : 'Failed to send test email', 'error');
+    } finally {
+      setIsSendingTestMail(false);
     }
   };
 
@@ -1219,6 +1239,86 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     }
                     className="w-full bg-[#1a1a1a] border border-[#c9a84c]/30 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#c9a84c]"
                   />
+                </div>
+              </div>
+
+              {/* Anti-Spam & Voltic Email Sender Settings Card */}
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-[#1e1e1e] to-[#141414] border border-[#c9a84c]/30 shadow-xl space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#c9a84c]/20">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-[#c9a84c]/15 border border-[#c9a84c]/30 flex items-center justify-center text-[#c9a84c]">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-white">
+                        {isRtl ? 'إعدادات اسم مرسل الرسائل (Voltic) ومنع الـ Spam' : 'Voltic Email Sender & Anti-Spam Setup'}
+                      </h3>
+                      <p className="text-[11px] text-gray-400">
+                        {isRtl ? 'تأكيد وصول رسائل العملاء والأدمن باسم المتجر الرسمي ودون الدخول لمجلد المهملات.' : 'Ensure emails arrive with official store name and avoid Spam folders.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="text-[10.5px] px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 font-bold flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>{isRtl ? 'مفعل باسم Voltic' : 'Active as Voltic'}</span>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-black/40 border border-white/5 space-y-1">
+                    <span className="text-gray-400 text-[10.5px] block">{isRtl ? 'اسم المرسل المعتمد' : 'Sender Display Name'}</span>
+                    <span className="font-extrabold text-[#c9a84c] text-sm font-['Cinzel',sans-serif]">VOLTIC</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-black/40 border border-white/5 space-y-1">
+                    <span className="text-gray-400 text-[10.5px] block">{isRtl ? 'نطاق الإرسال السحابي' : 'Cloud Auth Domain'}</span>
+                    <span className="font-mono text-gray-200 text-xs truncate block">voltic-aee22.firebaseapp.com</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-black/40 border border-white/5 space-y-1">
+                    <span className="text-gray-400 text-[10.5px] block">{isRtl ? 'البريد البديل للرد (Reply-To)' : 'Reply-To Email'}</span>
+                    <span className="font-mono text-gray-200 text-xs truncate block">bassemmubarak100000@gmail.com</span>
+                  </div>
+                </div>
+
+                {/* Steps to customize template in Firebase Console */}
+                <div className="p-3.5 rounded-xl bg-[#c9a84c]/5 border border-[#c9a84c]/20 text-xs space-y-2 text-gray-300 leading-relaxed">
+                  <div className="font-black text-[#c9a84c] flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{isRtl ? 'خطوات ضبط اسم Voltic في قوالب السحابة (Firebase Console):' : 'Steps to set Voltic sender name in Firebase Console:'}</span>
+                  </div>
+                  <ol className="list-decimal list-inside space-y-1 text-[11.5px] text-gray-300 ps-1">
+                    <li>{isRtl ? 'الدخول على Authentication ثم التبويب Templates (قوالب الرسائل).' : 'Go to Authentication -> Templates tab.'}</li>
+                    <li>{isRtl ? 'الضغط على أيقونة القلم (تعديل) أمام Password reset.' : 'Click edit icon next to Password reset.'}</li>
+                    <li>{isRtl ? 'تعديل اسم المرسل (Sender name) إلى: Voltic وبريد الرد إلى: بريدك الإداري.' : 'Set Sender Name to Voltic and Reply-To to Admin email.'}</li>
+                    <li>{isRtl ? 'حفظ القالب؛ وبذلك تصدر كافة الرسائل للعملاء والأدمن باسم Voltic رسمياً.' : 'Save template; all emails will now officially show Voltic.'}</li>
+                  </ol>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleSendTestMail}
+                    disabled={isSendingTestMail}
+                    className="py-2 px-4 rounded-xl bg-[#c9a84c]/20 hover:bg-[#c9a84c]/30 border border-[#c9a84c]/40 text-[#c9a84c] font-black text-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSendingTestMail ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Mail className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isRtl ? 'إرسال بريد تجريبي الآن باسم Voltic للتحقق' : 'Send Test Verification Email'}</span>
+                  </button>
+
+                  <a
+                    href="https://console.firebase.google.com/project/voltic-aee22/authentication/emails"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>{isRtl ? 'فتح قوالب الرسائل في Firebase Console' : 'Open Firebase Console Templates'}</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+                  </a>
                 </div>
               </div>
 

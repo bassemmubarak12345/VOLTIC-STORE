@@ -675,5 +675,46 @@ export const ensureAdminRecords = async () => {
   }
 };
 
+// ==========================================
+// 8. VOLTIC BRANDED EMAIL SERVICES
+// ==========================================
+
+/**
+ * Sends a password reset email via Firebase Auth with ActionCodeSettings
+ * pointing directly back to the Voltic store application URL.
+ */
+export const sendVolticPasswordResetEmail = async (email: string) => {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail) {
+    throw new Error('Email is required');
+  }
+
+  const origin =
+    typeof window !== 'undefined' && window.location.origin
+      ? window.location.origin
+      : 'https://voltic-aee22.web.app';
+
+  const actionCodeSettings = {
+    url: `${origin}/#login`,
+    handleCodeInApp: false,
+  };
+
+  try {
+    await sendPasswordResetEmail(auth, cleanEmail, actionCodeSettings);
+  } catch (err: unknown) {
+    const errorObj = err as { code?: string; message?: string };
+    // If domain isn't authorized in Firebase Auth continue-URIs yet, fall back to standard call
+    if (
+      errorObj?.code === 'auth/unauthorized-continue-uri' ||
+      errorObj?.code === 'auth/invalid-continue-uri'
+    ) {
+      console.warn('ActionCodeSettings continue URI warning, fallback to default:', err);
+      await sendPasswordResetEmail(auth, cleanEmail);
+    } else {
+      throw err;
+    }
+  }
+};
+
 // Auto run initialization in background
 ensureAdminRecords().catch(() => {});

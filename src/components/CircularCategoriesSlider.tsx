@@ -59,17 +59,18 @@ export const CircularCategoriesSlider: React.FC<CircularCategoriesSliderProps> =
   const rafIdRef = useRef<number | null>(null);
   const lastFrameTimeRef = useRef<number>(0);
 
-  // Measure single set width
+  // Measure single set width with subpixel accuracy
   const updateSetWidth = useCallback(() => {
     if (setRefA.current) {
-      const width = setRefA.current.offsetWidth;
+      const rect = setRefA.current.getBoundingClientRect();
+      const width = rect.width;
       if (width > 50) {
         singleSetWidthRef.current = width;
       }
     }
   }, []);
 
-  // Update transform on DOM directly
+  // Update transform on DOM directly with GPU acceleration
   const applyTransform = useCallback(() => {
     if (!trackRef.current) return;
     const setWidth = singleSetWidthRef.current || 1200;
@@ -351,7 +352,11 @@ export const CircularCategoriesSlider: React.FC<CircularCategoriesSliderProps> =
           Infinite Multi-Set Track:
           Set 0 (setRefA for width measurement), Set 1 (main visible viewport set), Set 2 (seamless continuation)
         */}
-        <div ref={trackRef} className="waterwheel-track flex items-center">
+        <div
+          ref={trackRef}
+          className="waterwheel-track flex items-center"
+          style={{ willChange: 'transform', transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
+        >
           {renderItemSet('set-0', setRefA)}
           {renderItemSet('set-1')}
           {renderItemSet('set-2')}

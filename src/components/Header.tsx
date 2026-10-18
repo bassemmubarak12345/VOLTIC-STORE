@@ -9,9 +9,11 @@ import {
   ChevronLeft,
   UserPlus,
   LogIn,
+  LogOut,
+  UserCheck,
   Package,
 } from 'lucide-react';
-import { Language, Theme, StoreSettings } from '../types';
+import { Language, Theme, StoreSettings, User } from '../types';
 import { TRANSLATIONS } from '../data/translations';
 
 interface HeaderProps {
@@ -21,6 +23,8 @@ interface HeaderProps {
   cartCount: number;
   cartNotice?: string | null;
   settings?: StoreSettings | null;
+  currentUser?: User | null;
+  onLogout?: () => void;
   onOpenCart: () => void;
   onOpenSearch: () => void;
   onOpenAccount: () => void;
@@ -37,8 +41,11 @@ export const Header: React.FC<HeaderProps> = ({
   cartCount,
   cartNotice,
   settings,
+  currentUser,
+  onLogout,
   onOpenCart,
   onOpenSearch,
+  onOpenAccount,
   onOpenRegister,
   onOpenLogin,
   onOpenOrders,
@@ -99,20 +106,20 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* 2. Logo in the Center */}
-          <div className="flex-1 flex flex-col items-center justify-center text-center px-2">
+          {/* 2. Logo in the Center (Responsive on Mobile, Tablet & Desktop without clipping) */}
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-1 sm:px-2 min-w-0">
             <a
               href="#hero"
               onClick={(e) => {
                 e.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="inline-block group text-decoration-none"
+              className="inline-block group text-decoration-none max-w-full"
             >
-              <span className="text-2xl sm:text-3xl font-black tracking-[4px] sm:tracking-[6px] text-gold-gradient block leading-none select-none font-['Cinzel',sans-serif]">
+              <span className="text-xl sm:text-2xl md:text-3xl font-black tracking-[3px] sm:tracking-[5px] text-gold-gradient block leading-none select-none font-['Cinzel',sans-serif] truncate">
                 {brandTitle}
               </span>
-              <span className="text-[9px] sm:text-[10px] tracking-[2px] sm:tracking-[3px] text-[var(--text-muted)] group-hover:text-[#c9a84c] transition-colors block mt-1 font-semibold uppercase">
+              <span className="text-[8px] sm:text-[9.5px] tracking-[1.5px] sm:tracking-[2.5px] text-[var(--text-muted)] group-hover:text-[#c9a84c] transition-colors block mt-1 font-semibold uppercase truncate">
                 {brandSub}
               </span>
             </a>
@@ -191,52 +198,108 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Drawer Scrollable Content */}
             <div className="flex-1 overflow-y-auto py-3 space-y-2.5 custom-scrollbar">
               
-              {/* ===== 1 & 2. تسجيل وتحته تسجيل الدخول بشكل متناسق ومضغوط ===== */}
-              <div className="flex flex-col gap-2">
-                {/* زر التسجيل (في الأعلى) */}
-                <button
-                  id="menuRegisterVerticalBtn"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onOpenRegister();
-                  }}
-                  className="w-full h-10 px-3.5 rounded-lg bg-gradient-to-r from-[#e8c96d] via-[#c9a84c] to-[#9a7830] text-black shadow-xs hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-between group cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <UserPlus className="w-4 h-4 text-black flex-shrink-0" />
-                    <span className="text-xs font-black tracking-wide">
-                      {t.menuRegister}
-                    </span>
-                  </div>
-                  {isRtl ? (
-                    <ChevronLeft className="w-4 h-4 text-black/70 group-hover:-translate-x-0.5 transition-transform" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-black/70 group-hover:translate-x-0.5 transition-transform" />
-                  )}
-                </button>
+              {/* ===== 1 & 2. تسجيل وتحته تسجيل الدخول أو اسم العميل وتحته تسجيل الخروج ===== */}
+              {currentUser ? (
+                <div className="flex flex-col gap-2">
+                  {/* زر يظهر فيه اسم العميل بدلاً من زر التسجيل */}
+                  <button
+                    id="menuCustomerProfileBtn"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenAccount();
+                    }}
+                    className="w-full h-11 px-3.5 rounded-lg bg-gradient-to-r from-[#e8c96d] via-[#c9a84c] to-[#9a7830] text-black shadow-md hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-between group cursor-pointer"
+                    title={isRtl ? 'عرض بيانات حسابك' : 'View account'}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-black/15 flex items-center justify-center flex-shrink-0">
+                        <UserCheck className="w-4 h-4 text-black" />
+                      </div>
+                      <div className="flex flex-col text-start truncate">
+                        <span className="text-[9.5px] font-bold text-black/75 uppercase tracking-wider leading-none">
+                          {isRtl ? 'مرحباً بك' : 'Welcome'}
+                        </span>
+                        <span className="text-xs font-black tracking-wide truncate mt-0.5">
+                          {currentUser.name}
+                        </span>
+                      </div>
+                    </div>
+                    {isRtl ? (
+                      <ChevronLeft className="w-4 h-4 text-black/70 group-hover:-translate-x-0.5 transition-transform flex-shrink-0" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-black/70 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
+                    )}
+                  </button>
 
-                {/* زر تسجيل الدخول (تحته) */}
-                <button
-                  id="menuLoginVerticalBtn"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onOpenLogin();
-                  }}
-                  className="w-full h-10 px-3.5 rounded-lg bg-[var(--bg-card-elevated)] border border-[#c9a84c]/50 hover:border-[#c9a84c] text-[var(--text-main)] shadow-xs hover:bg-[#c9a84c]/10 active:scale-[0.99] transition-all flex items-center justify-between group cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <LogIn className="w-4 h-4 text-[#c9a84c] flex-shrink-0" />
-                    <span className="text-xs font-black tracking-wide text-[#c9a84c]">
-                      {t.menuLogin}
-                    </span>
-                  </div>
-                  {isRtl ? (
-                    <ChevronLeft className="w-4 h-4 text-[#c9a84c]/70 group-hover:-translate-x-0.5 transition-transform" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-[#c9a84c]/70 group-hover:translate-x-0.5 transition-transform" />
-                  )}
-                </button>
-              </div>
+                  {/* زر تسجيل الخروج (يظهر مكان زر تسجيل الدخول تحته مباشرة) */}
+                  <button
+                    id="menuLogoutVerticalBtn"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      if (onLogout) onLogout();
+                    }}
+                    className="w-full h-10 px-3.5 rounded-lg bg-[var(--bg-card-elevated)] border border-red-500/40 hover:border-red-500 text-red-400 hover:bg-red-500/10 active:scale-[0.99] transition-all flex items-center justify-between group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <LogOut className="w-4 h-4 text-red-400 flex-shrink-0" />
+                      <span className="text-xs font-black tracking-wide text-red-400">
+                        {t.logout || (isRtl ? 'تسجيل الخروج' : 'Log Out')}
+                      </span>
+                    </div>
+                    {isRtl ? (
+                      <ChevronLeft className="w-4 h-4 text-red-400/70 group-hover:-translate-x-0.5 transition-transform" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-red-400/70 group-hover:translate-x-0.5 transition-transform" />
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {/* زر التسجيل (في الأعلى) */}
+                  <button
+                    id="menuRegisterVerticalBtn"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenRegister();
+                    }}
+                    className="w-full h-10 px-3.5 rounded-lg bg-gradient-to-r from-[#e8c96d] via-[#c9a84c] to-[#9a7830] text-black shadow-xs hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-between group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <UserPlus className="w-4 h-4 text-black flex-shrink-0" />
+                      <span className="text-xs font-black tracking-wide">
+                        {t.menuRegister}
+                      </span>
+                    </div>
+                    {isRtl ? (
+                      <ChevronLeft className="w-4 h-4 text-black/70 group-hover:-translate-x-0.5 transition-transform" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-black/70 group-hover:translate-x-0.5 transition-transform" />
+                    )}
+                  </button>
+
+                  {/* زر تسجيل الدخول (تحته) */}
+                  <button
+                    id="menuLoginVerticalBtn"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenLogin();
+                    }}
+                    className="w-full h-10 px-3.5 rounded-lg bg-[var(--bg-card-elevated)] border border-[#c9a84c]/50 hover:border-[#c9a84c] text-[var(--text-main)] shadow-xs hover:bg-[#c9a84c]/10 active:scale-[0.99] transition-all flex items-center justify-between group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <LogIn className="w-4 h-4 text-[#c9a84c] flex-shrink-0" />
+                      <span className="text-xs font-black tracking-wide text-[#c9a84c]">
+                        {t.menuLogin}
+                      </span>
+                    </div>
+                    {isRtl ? (
+                      <ChevronLeft className="w-4 h-4 text-[#c9a84c]/70 group-hover:-translate-x-0.5 transition-transform" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-[#c9a84c]/70 group-hover:translate-x-0.5 transition-transform" />
+                    )}
+                  </button>
+                </div>
+              )}
 
               {/* Divider */}
               <div className="h-px bg-gradient-to-r from-transparent via-[#c9a84c]/20 to-transparent my-1.5" />

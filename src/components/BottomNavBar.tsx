@@ -1,6 +1,6 @@
 import React from 'react';
 import { Home, Grid, ShoppingBag, User } from 'lucide-react';
-import { Language, Theme } from '../types';
+import { Language, Theme, User as UserType } from '../types';
 import { TRANSLATIONS } from '../data/translations';
 
 interface BottomNavBarProps {
@@ -9,6 +9,7 @@ interface BottomNavBarProps {
   onToggleTheme?: () => void;
   cartCount: number;
   cartNotice?: string | null;
+  currentUser?: UserType | null;
   onOpenCart: () => void;
   onOpenAccount: () => void;
   onScrollToCategories: () => void;
@@ -18,6 +19,7 @@ interface BottomNavBarProps {
 export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   language,
   cartCount,
+  currentUser,
   onOpenCart,
   onOpenAccount,
   onScrollToCategories,
@@ -86,16 +88,23 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           </span>
         </button>
 
-        {/* 4. الحساب (Account) */}
+        {/* 4. الحساب (Account / Customer Name) */}
         <button
           id="bottomNavAccount"
           onClick={onOpenAccount}
-          className="flex-1 flex flex-col items-center justify-center py-1 px-2 text-[var(--text-muted)] hover:text-[#c9a84c] transition-colors cursor-pointer"
-          title={t.bottomAccount}
+          className={`flex-1 flex flex-col items-center justify-center py-1 px-2 transition-colors cursor-pointer ${
+            currentUser ? 'text-[#c9a84c]' : 'text-[var(--text-muted)] hover:text-[#c9a84c]'
+          }`}
+          title={currentUser ? currentUser.name : t.bottomAccount}
         >
-          <User className="w-5 h-5 sm:w-6 sm:h-6" />
-          <span className="text-[11px] sm:text-xs font-bold mt-1 tracking-tight">
-            {t.bottomAccount}
+          <div className="relative">
+            <User className="w-5 h-5 sm:w-6 sm:h-6" />
+            {currentUser && (
+              <span className="absolute -top-1 -end-1 w-2.5 h-2.5 bg-emerald-400 border border-black rounded-full" />
+            )}
+          </div>
+          <span className="text-[11px] sm:text-xs font-bold mt-1 tracking-tight truncate max-w-[70px]">
+            {currentUser ? currentUser.name.split(' ')[0] : t.bottomAccount}
           </span>
         </button>
 

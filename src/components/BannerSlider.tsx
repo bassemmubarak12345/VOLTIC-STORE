@@ -264,25 +264,25 @@ export const BannerSlider: React.FC<BannerSliderProps> = ({
       {hasBanners ? (
         /* Subtle soft gold border directly on the edge of the banner images */
         <div className="relative w-full rounded-xl sm:rounded-2xl border border-[#c9a84c]/35 shadow-xl bg-black/40 overflow-hidden group">
-          {/* Banner Images with Silky Smooth Crossfade */}
-          <div className="relative w-full overflow-hidden">
+          {/* Banner Images with Silky Smooth Crossfade and Locked Aspect Ratio to prevent any layout shifting */}
+          <div className="relative w-full aspect-[2.3/1] xs:aspect-[2.6/1] sm:aspect-[2.9/1] md:aspect-[3.3/1] overflow-hidden bg-black/60">
             {activeBanners.map((banner, index) => {
               const isActive = index === currentIndex;
               const bannerId = banner.id || `banner-${index}`;
               return (
                 <div
                   key={bannerId}
-                  className={`w-full transition-opacity duration-1000 ease-in-out ${
+                  className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
                     isActive
-                      ? 'opacity-100 relative z-10'
-                      : 'opacity-0 absolute inset-0 pointer-events-none z-0'
+                      ? 'opacity-100 z-10'
+                      : 'opacity-0 pointer-events-none z-0'
                   }`}
                   aria-hidden={!isActive}
                 >
                   <img
                     src={banner.image}
                     alt={isRtl ? banner.altAr : banner.altEn}
-                    className="w-full h-auto object-contain block mx-auto select-none pointer-events-none transition-transform duration-500 group-hover:scale-[1.01]"
+                    className="w-full h-full object-cover sm:object-contain block mx-auto select-none pointer-events-none transition-transform duration-700 group-hover:scale-[1.01]"
                     loading={index === 0 ? 'eager' : 'lazy'}
                     decoding={index === 0 ? 'sync' : 'async'}
                     referrerPolicy="no-referrer"

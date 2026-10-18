@@ -49,9 +49,12 @@ export interface User {
 }
 
 export interface OrderItem {
+  id?: string;
   name: string;
   qty: number;
   price: number;
+  img?: string;
+  ml?: string;
 }
 
 export interface Order {

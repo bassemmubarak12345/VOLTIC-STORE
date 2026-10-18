@@ -23,6 +23,7 @@ import {
   auth,
   saveCustomerProfile,
   checkCustomerByEmail,
+  sendVolticPasswordResetEmail,
 } from '../lib/firebase';
 import {
   createUserWithEmailAndPassword,
@@ -298,12 +299,12 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         return;
       }
 
-      // 2. Send password reset email via Firebase Auth
-      await sendPasswordResetEmail(auth, cleanEmail);
+      // 2. Send password reset email via Voltic branded service
+      await sendVolticPasswordResetEmail(cleanEmail);
       setSuccessMsg(
         isRtl
-          ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني بنجاح.\n\n📌 تنبيه هام: يرجى تفقد صندوق الوارد (Inbox) أو مجلد الرسائل غير المرغوب فيها (Spam / Junk) في حال عدم ظهور الرسالة في البريد الرئيسي فوراً.'
-          : 'Password reset link sent to your email successfully\n\n📌 Note: Please check your Inbox or Spam / Junk folder if you do not see the email immediately.'
+          ? 'تم إرسال رابط إعادة تعيين كلمة المرور باسم متجر (Voltic) إلى بريدك الإلكتروني بنجاح.\n\n📌 تنبيه هام: الرسالة مرسلة باسم المتجر الرسمي (Voltic). في حال وصولها لمجلد الرسائل غير المرغوب فيها (Spam / Junk)، يرجى فتحها والضغط على "ليس بريداً عشوائياً / Not Spam" لتصلك كافة رسائل وتحديثات المتجر دائماً في صندوق الوارد الرئيسي.'
+          : 'Password reset link sent under (Voltic) store name to your email successfully.\n\n📌 Note: Sent under the official name (Voltic). If found in Spam / Junk, please click "Not Spam" to ensure all future Voltic updates arrive directly in your primary Inbox.'
       );
     } catch (err: unknown) {
       console.error('Customer forgot password error:', err);
@@ -339,10 +340,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/85 backdrop-blur-md p-3 sm:p-5 py-6 sm:py-10 flex justify-center items-start sm:items-center min-h-screen"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
-      <div className="relative w-full max-w-md bg-[#141414] border border-[#c9a84c]/30 rounded-3xl p-6 sm:p-8 shadow-2xl my-8">
+      <div className="relative w-full max-w-md bg-[#141414] border border-[#c9a84c]/35 rounded-3xl p-5 sm:p-8 shadow-2xl my-auto">
         
         {/* Close Button */}
         <button
@@ -353,25 +354,25 @@ export const AccountModal: React.FC<AccountModalProps> = ({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Modal Header */}
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-[#c9a84c]/10 border border-[#c9a84c]/30 text-[#c9a84c] flex items-center justify-center mx-auto mb-2.5 shadow-lg">
+        {/* Modal Header & Voltic Emblem (100% Visible & Responsive on Mobile, Tablet & PC) */}
+        <div className="text-center mb-5 sm:mb-6 flex flex-col items-center justify-center">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#c9a84c]/20 via-[#c9a84c]/10 to-transparent border border-[#c9a84c]/40 text-[#c9a84c] flex items-center justify-center mx-auto mb-2.5 shadow-lg flex-shrink-0">
             {currentUser ? (
-              <UserCheck className="w-6 h-6" />
+              <UserCheck className="w-6 h-6 sm:w-7 sm:h-7" />
             ) : view === 'login' ? (
-              <LogIn className="w-6 h-6" />
+              <LogIn className="w-6 h-6 sm:w-7 sm:h-7" />
             ) : view === 'register' ? (
-              <UserPlus className="w-6 h-6" />
+              <UserPlus className="w-6 h-6 sm:w-7 sm:h-7" />
             ) : (
-              <KeyRound className="w-6 h-6" />
+              <KeyRound className="w-6 h-6 sm:w-7 sm:h-7" />
             )}
           </div>
 
-          <h3 className="text-xl sm:text-2xl font-black text-white font-['Cinzel',sans-serif]">
+          <h3 className="text-2xl sm:text-3xl font-black text-gold-gradient font-['Cinzel',serif] tracking-[3px] sm:tracking-[4px] select-none leading-tight">
             VOLTIC
           </h3>
 
-          <p className="text-xs text-[#c9a84c] font-bold mt-0.5">
+          <p className="text-[10.5px] sm:text-xs text-[#c9a84c] font-bold mt-1 tracking-wide">
             {currentUser
               ? isRtl ? 'بيانات حسابك المسجل' : 'Your Registered Profile'
               : view === 'login'
