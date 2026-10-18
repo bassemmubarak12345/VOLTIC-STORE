@@ -122,7 +122,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!resetEmail.trim()) {
+    const cleanEmail = resetEmail.trim().toLowerCase();
+    if (!cleanEmail) {
       setErrorMsg(isRtl ? 'يرجى إدخال البريد الإلكتروني' : 'Please enter your email');
       return;
     }
@@ -132,31 +133,50 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
     setIsResetting(true);
 
     try {
-      // Must verify email belongs to an admin
-      const isAdmin = await checkAdminEmail(resetEmail.trim());
+      // Must verify email belongs to an authorized admin in the cloud
+      const isAdmin = await checkAdminEmail(cleanEmail);
       if (!isAdmin) {
         setErrorMsg(
           isRtl
-            ? 'خطأ: هذا البريد غير مسجل كمسؤول للوحة التحكم.'
+            ? 'خطأ: هذا البريد الإلكتروني غير مسجل كمسؤول للوحة التحكم.'
             : 'Error: This email is not registered as an authorized administrator.'
         );
         setIsResetting(false);
         return;
       }
 
-      await sendPasswordResetEmail(auth, resetEmail.trim());
+      await sendPasswordResetEmail(auth, cleanEmail);
       setSuccessMsg(
         isRtl
-          ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني بنجاح.\n(ملاحظة: تفقد صندوق الوارد أو مجلد الرسائل غير المرغوب فيها Spam / Junk إذا لم تجدها في الرسائل العادية)'
-          : 'Password reset link sent successfully.\n(Note: Check your Inbox or Spam / Junk folder if not received immediately)'
+          ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني بنجاح.\n\n📌 تنبيه: يرجى تفقد صندوق الوارد (Inbox) أو مجلد الرسائل غير المرغوب فيها (Spam / Junk) في حال عدم ظهورها فوراً.'
+          : 'Password reset link sent successfully.\n\n📌 Note: Check your Inbox or Spam / Junk folder if not received immediately.'
       );
     } catch (err: unknown) {
       console.error('Password reset error:', err);
-      setErrorMsg(
-        isRtl
-          ? 'تعذر إرسال الرابط، يرجى التأكد من صحة البريد والمحاولة مرة أخرى.'
-          : 'Failed to send reset link. Please check your email and try again.'
-      );
+      const errorObj = err as { code?: string; message?: string };
+      if (errorObj?.code === 'auth/user-not-found') {
+        setErrorMsg(
+          isRtl
+            ? 'خطأ: هذا البريد الإلكتروني غير مسجل في نظام الحسابات.'
+            : 'Error: User not found in system.'
+        );
+      } else if (errorObj?.code === 'auth/invalid-email') {
+        setErrorMsg(
+          isRtl ? 'صيغة البريد الإلكتروني غير صالحة.' : 'Invalid email format.'
+        );
+      } else if (errorObj?.code === 'auth/too-many-requests') {
+        setErrorMsg(
+          isRtl
+            ? 'تم إرسال عدة طلبات مؤخراً، يرجى الانتظار دقيقة والمحاولة لاحقاً.'
+            : 'Too many requests. Please wait a moment.'
+        );
+      } else {
+        setErrorMsg(
+          isRtl
+            ? 'تعذر إرسال الرابط، يرجى التأكد من صحة البريد والمحاولة مرة أخرى.'
+            : 'Failed to send reset link. Please check your email and try again.'
+        );
+      }
     } finally {
       setIsResetting(false);
     }

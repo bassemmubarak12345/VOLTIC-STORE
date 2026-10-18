@@ -48,6 +48,7 @@ import {
   updateOrderStatusInFirestore,
   deleteOrderFromFirestore,
   checkAdminEmail,
+  registerAdminEmail,
 } from '../lib/firebase';
 import {
   signOut,
@@ -377,6 +378,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const credential = EmailAuthProvider.credential(currentUser.email || '', currentPasswordForEmail);
       await reauthenticateWithCredential(currentUser, credential);
       await updateEmail(currentUser, newEmail.trim());
+      
+      // Sync to cloud admin records
+      const cleanNewEmail = newEmail.trim().toLowerCase();
+      await registerAdminEmail(cleanNewEmail);
+      if (settings) {
+        const updatedAdmins = Array.from(new Set([...(settings.adminEmails || []), cleanNewEmail]));
+        await saveSettingsToFirestore({ adminEmails: updatedAdmins });
+      }
+
       showNotification(isRtl ? 'تم تحديث البريد الإلكتروني في السحابة بنجاح ✨' : 'Email updated successfully');
       setNewEmail('');
       setCurrentPasswordForEmail('');

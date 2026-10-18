@@ -132,7 +132,6 @@ body {
 .waterwheel-track {
   display: flex;
   width: max-content;
-  animation: waterwheelLoop 48s linear infinite;
   will-change: transform;
 }
 

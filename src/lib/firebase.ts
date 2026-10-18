@@ -463,33 +463,67 @@ export const deleteOrderFromFirestore = async (orderId: string) => {
 // ==========================================
 // 6. CUSTOMERS & AUTH MANAGEMENT
 // ==========================================
+// 6. CUSTOMERS & AUTH MANAGEMENT (Strictly Isolated Collections)
+// ==========================================
 
 export const saveCustomerProfile = async (uid: string, profile: Partial<User>) => {
+  const cleanEmail = profile.email?.trim().toLowerCase();
+  
+  // 1. Save in Firestore 'customers' collection by UID
   const customerDoc = doc(db, 'customers', uid);
-  await setDoc(
-    customerDoc,
-    {
-      ...profile,
-      uid,
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
+  const dataToSave = {
+    ...profile,
+    uid,
+    role: 'customer',
+    updatedAt: serverTimestamp(),
+  };
+  await setDoc(customerDoc, dataToSave, { merge: true });
+
+  // 2. Also save in 'customers' collection indexed directly by cleanEmail for instant O(1) checks
+  if (cleanEmail) {
+    const emailCustomerDoc = doc(db, 'customers', cleanEmail);
+    await setDoc(
+      emailCustomerDoc,
+      {
+        ...dataToSave,
+        email: cleanEmail,
+      },
+      { merge: true }
+    );
+  }
 };
 
 export const getCustomerProfile = async (uid: string): Promise<User | null> => {
-  const docSnap = await getDoc(doc(db, 'customers', uid));
-  if (docSnap.exists()) {
-    return docSnap.data() as User;
+  try {
+    const docSnap = await getDoc(doc(db, 'customers', uid));
+    if (docSnap.exists()) {
+      return docSnap.data() as User;
+    }
+  } catch (err) {
+    console.warn('getCustomerProfile notice:', err);
   }
   return null;
 };
 
 export const checkCustomerByEmail = async (email: string): Promise<User | null> => {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail) return null;
+
+  // 1. Direct O(1) document lookup in 'customers' collection by email ID
+  try {
+    const emailSnap = await getDoc(doc(db, 'customers', cleanEmail));
+    if (emailSnap.exists()) {
+      return { ...emailSnap.data(), email: cleanEmail } as User;
+    }
+  } catch (err) {
+    console.warn('Direct customer doc lookup notice:', err);
+  }
+
+  // 2. Query 'customers' collection by email field
   try {
     const q = query(
       collection(db, 'customers'),
-      where('email', '==', email.trim().toLowerCase())
+      where('email', '==', cleanEmail)
     );
     const snap = await getDocs(q);
     if (!snap.empty) {
@@ -497,15 +531,35 @@ export const checkCustomerByEmail = async (email: string): Promise<User | null> 
       return { ...docSnap.data(), uid: docSnap.id } as User;
     }
   } catch (err) {
-    console.error('Error checking customer by email:', err);
+    console.warn('Customers query by email notice:', err);
   }
+
+  // 3. Fallback to localStorage cached customer data
+  try {
+    const cached = localStorage.getItem('voltic_user');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed?.email?.trim().toLowerCase() === cleanEmail) {
+        return parsed as User;
+      }
+    }
+  } catch {
+    // Quota fallback
+  }
+
   return null;
 };
 
 export const checkAdminEmail = async (email: string): Promise<boolean> => {
   const cleanEmail = email.trim().toLowerCase();
-  
-  // Check settings doc
+  if (!cleanEmail) return false;
+
+  // 1. Check primary hardcoded store admin list
+  if (DEFAULT_STORE_SETTINGS.adminEmails.some((e) => e.toLowerCase() === cleanEmail)) {
+    return true;
+  }
+
+  // 2. Check settings document in Firestore (settings/store_config)
   try {
     const docSnap = await getDoc(doc(db, 'settings', 'store_config'));
     if (docSnap.exists()) {
@@ -514,21 +568,18 @@ export const checkAdminEmail = async (email: string): Promise<boolean> => {
         return true;
       }
     }
-  } catch {
-    // fallback
+  } catch (err) {
+    console.warn('Settings admin check notice:', err);
   }
 
-  // Check admins collection
+  // 3. Check isolated 'admins' collection in Firestore
   try {
     const adminSnap = await getDoc(doc(db, 'admins', cleanEmail));
-    if (adminSnap.exists()) return true;
-  } catch {
-    // fallback
-  }
-
-  // Default hardcoded admin check as fallback
-  if (DEFAULT_STORE_SETTINGS.adminEmails.some((e) => e.toLowerCase() === cleanEmail)) {
-    return true;
+    if (adminSnap.exists()) {
+      return true;
+    }
+  } catch (err) {
+    console.warn('Admins collection check notice:', err);
   }
 
   return false;
@@ -536,9 +587,35 @@ export const checkAdminEmail = async (email: string): Promise<boolean> => {
 
 export const registerAdminEmail = async (email: string) => {
   const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail) return;
+
   await setDoc(doc(db, 'admins', cleanEmail), {
     email: cleanEmail,
     role: 'admin',
     createdAt: serverTimestamp(),
   });
 };
+
+// Seed default admin accounts into Firestore 'admins' collection in the cloud
+export const ensureAdminRecords = async () => {
+  try {
+    const defaultAdmins = DEFAULT_STORE_SETTINGS.adminEmails || [];
+    for (const email of defaultAdmins) {
+      const clean = email.toLowerCase();
+      const adminDocRef = doc(db, 'admins', clean);
+      const snap = await getDoc(adminDocRef);
+      if (!snap.exists()) {
+        await setDoc(adminDocRef, {
+          email: clean,
+          role: 'admin',
+          createdAt: serverTimestamp(),
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('ensureAdminRecords notice:', err);
+  }
+};
+
+// Auto run initialization in background
+ensureAdminRecords().catch(() => {});

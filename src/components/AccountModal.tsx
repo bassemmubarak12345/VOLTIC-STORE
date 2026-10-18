@@ -244,7 +244,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     setErrorMsg('');
     setSuccessMsg('');
 
-    if (!resetEmail.trim()) {
+    const cleanEmail = resetEmail.trim().toLowerCase();
+    if (!cleanEmail) {
       setErrorMsg(isRtl ? 'يرجى كتابة البريد الإلكتروني' : 'Please enter your email');
       return;
     }
@@ -252,28 +253,51 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     setIsLoading(true);
 
     try {
-      // Check if email exists in customers collection
-      const customer = await checkCustomerByEmail(resetEmail.trim());
+      // 1. Check if email exists in customers cloud collection
+      const customer = await checkCustomerByEmail(cleanEmail);
       if (!customer) {
-        setErrorMsg('هذا البريد غير مسجل لدينا');
+        setErrorMsg(
+          isRtl
+            ? 'هذا البريد الإلكتروني غير مسجل لدينا في المتجر. يرجى إنشاء حساب جديد أولاً.'
+            : 'This email is not registered with us. Please create a new account.'
+        );
         setIsLoading(false);
         return;
       }
 
-      // Send password reset email
-      await sendPasswordResetEmail(auth, resetEmail.trim());
+      // 2. Send password reset email via Firebase Auth
+      await sendPasswordResetEmail(auth, cleanEmail);
       setSuccessMsg(
         isRtl
-          ? 'تم ارسال رابط اعادة التعيين الى بريدك\n\n📌 تنبيه هام: يرجى تفقد صندوق الوارد (Inbox) أو مجلد الرسائل غير المرغوب فيها (Spam / Junk) في حال عدم ظهور الرسالة في البريد الرئيسي فوراً.'
+          ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني بنجاح.\n\n📌 تنبيه هام: يرجى تفقد صندوق الوارد (Inbox) أو مجلد الرسائل غير المرغوب فيها (Spam / Junk) في حال عدم ظهور الرسالة في البريد الرئيسي فوراً.'
           : 'Password reset link sent to your email successfully\n\n📌 Note: Please check your Inbox or Spam / Junk folder if you do not see the email immediately.'
       );
     } catch (err: unknown) {
-      console.error('Forgot password error:', err);
-      setErrorMsg(
-        isRtl
-          ? 'تعذر إرسال الرابط، يرجى التأكد من البريد والمحاولة ثانية.'
-          : 'Could not send reset link. Please check email and retry.'
-      );
+      console.error('Customer forgot password error:', err);
+      const errorObj = err as { code?: string; message?: string };
+      if (errorObj?.code === 'auth/user-not-found') {
+        setErrorMsg(
+          isRtl
+            ? 'هذا البريد الإلكتروني غير مسجل لدينا في المتجر.'
+            : 'This email is not registered in our system.'
+        );
+      } else if (errorObj?.code === 'auth/invalid-email') {
+        setErrorMsg(
+          isRtl ? 'صيغة البريد الإلكتروني غير صحيحة.' : 'Invalid email format.'
+        );
+      } else if (errorObj?.code === 'auth/too-many-requests') {
+        setErrorMsg(
+          isRtl
+            ? 'تم إرسال عدة طلبات مؤخراً، يرجى الانتظار دقيقة والمحاولة ثانية.'
+            : 'Too many requests. Please wait a minute and retry.'
+        );
+      } else {
+        setErrorMsg(
+          isRtl
+            ? 'تعذر إرسال الرابط، يرجى التأكد من صحة البريد والمحاولة مرة أخرى.'
+            : 'Could not send reset link. Please check email and retry.'
+        );
+      }
     } finally {
       setIsLoading(false);
     }
