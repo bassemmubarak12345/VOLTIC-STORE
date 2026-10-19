@@ -12,6 +12,7 @@ import {
   Eye,
   EyeOff,
   Store,
+  ExternalLink,
 } from 'lucide-react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, checkAdminEmail, sendVolticPasswordResetEmail } from '../lib/firebase';
@@ -148,8 +149,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
       await sendVolticPasswordResetEmail(cleanEmail);
       setSuccessMsg(
         isRtl
-          ? 'تم إرسال رابط إعادة تعيين كلمة المرور باسم متجر (Voltic) إلى بريدك الإلكتروني بنجاح.\n\n📌 تنبيه: الرسالة مرسلة باسم المتجر الرسمي (Voltic). في حال وصولها في مجلد الرسائل غير المرغوب فيها (Spam / Junk)، يرجى الضغط على "ليس بريداً عشوائياً / Not Spam" حتى تصلك كافة الرسائل الإدارية في صندوق الوارد مباشرة.'
-          : 'Password reset link sent under (Voltic) store name to your email successfully.\n\n📌 Note: Sent under official name (Voltic). If found in Spam / Junk, please click "Not Spam" to ensure all administrator emails arrive directly in your Inbox.'
+          ? 'تم إرسال رابط استعادة كلمة المرور للإدارة باسم متجر (Voltic) إلى بريدك بنجاح.\n\n📌 تأكيد هام ومؤكد: الرسالة مرسلة باسم المتجر الرسمي (Voltic). إذا لم تجد الرسالة في صندوق الوارد فوراً، ستجدها بالتأكيد في مجلد الرسائل غير المرغوب فيها (Spam / Junk)؛ افتحها واضغط على "ليس بريداً عشوائياً / Not Spam" لتصلك كافة الإشعارات الإدارية في الوارد دائماً.'
+          : 'Admin password reset link sent under (Voltic) store name successfully.\n\n📌 Important Confirmation: Sent under official name (Voltic). If not found in your Inbox, you will definitely find it in your Spam / Junk folder. Please open it and mark it as "Not Spam" to ensure all future admin emails arrive in your Inbox.'
       );
     } catch (err: unknown) {
       console.error('Password reset error:', err);
@@ -246,11 +247,35 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
           </div>
         )}
 
-        {/* Success Alert */}
+        {/* Success & Spam Confirmation Notification */}
         {successMsg && (
-          <div className="mb-5 p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 text-emerald-300 text-xs leading-relaxed flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-400 mt-0.5" />
-            <span className="whitespace-pre-line">{successMsg}</span>
+          <div className="mb-5 p-4 rounded-2xl bg-gradient-to-br from-emerald-950/40 to-black/60 border border-emerald-500/40 shadow-xl space-y-2.5">
+            <div className="flex items-center gap-2 text-emerald-400 font-black text-xs sm:text-sm">
+              <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+              <span>{isRtl ? 'تم إرسال الرسالة بنجاح باسم متجر Voltic' : 'Email Sent Successfully under Voltic Name'}</span>
+            </div>
+            
+            <p className="text-xs text-gray-200 leading-relaxed whitespace-pre-line font-medium">
+              {successMsg}
+            </p>
+
+            <div className="pt-2 border-t border-emerald-500/20 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[11px] font-bold text-[#c9a84c] flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{isRtl ? 'مؤكد: إذا لم تجدها في الوارد ستجدها في الـ Spam' : 'Confirmed: If not in Inbox, check Spam folder'}</span>
+              </span>
+
+              <a
+                href="https://mail.google.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs transition-colors"
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>{isRtl ? 'فتح البريد الإلكتروني' : 'Open Email'}</span>
+                <ExternalLink className="w-3 h-3 opacity-70" />
+              </a>
+            </div>
           </div>
         )}
 

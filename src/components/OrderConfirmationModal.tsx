@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, X, PackageCheck } from 'lucide-react';
+import { CheckCircle, X, PackageCheck, Mail } from 'lucide-react';
 import { Order, Language } from '../types';
 import { TRANSLATIONS } from '../data/translations';
 
@@ -49,10 +49,25 @@ export const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({
           {t.orderNumber}: <span className="font-black text-[#c9a84c]">{order.id}</span>
         </p>
 
-        <div className="p-3.5 rounded-lg bg-[var(--bg-card-elevated)] border border-[#c9a84c]/20 text-xs text-[var(--text-muted)] mb-5 text-start flex items-center gap-2">
+        <div className="p-3.5 rounded-lg bg-[var(--bg-card-elevated)] border border-[#c9a84c]/20 text-xs text-[var(--text-muted)] mb-4 text-start flex items-center gap-2">
           <PackageCheck className="w-4 h-4 text-[#c9a84c] flex-shrink-0" />
           <span>{t.orderDispatchedMsg}</span>
         </div>
+
+        {/* Email & Voltic Store Notice */}
+        {order.customer?.email && (
+          <div className="p-3 rounded-xl bg-[#c9a84c]/10 border border-[#c9a84c]/25 text-xs text-[var(--text-muted)] mb-4 text-start space-y-1">
+            <div className="flex items-center gap-1.5 font-bold text-[#c9a84c]">
+              <Mail className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>{language === 'ar' ? 'إشعارات البريد من متجر Voltic:' : 'Voltic Store Notifications:'}</span>
+            </div>
+            <p className="text-[11px] leading-relaxed">
+              {language === 'ar'
+                ? 'كافة رسائل وإشعارات المتجر تصدر باسم (Voltic). إذا لم تجد الرسالة في صندوق الوارد، ستجدها في مجلد الرسائل غير المرغوب فيها (Spam / Junk)؛ افتحها واضغط على Not Spam لتصلك كافة التحديثات في الوارد دائماً.'
+                : 'All store emails are sent under the official name (Voltic). If not found in your Inbox, check your Spam / Junk folder and click "Not Spam".'}
+            </p>
+          </div>
+        )}
 
         {/* Order Items Breakdown */}
         <div className="border-t border-b border-[#c9a84c]/15 py-3 mb-5 max-h-[180px] overflow-y-auto">

@@ -435,8 +435,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       await sendVolticPasswordResetEmail(currentUser.email);
       showNotification(
         isRtl
-          ? 'تم إرسال رابط إعادة تعيين كلمة المرور باسم متجر (Voltic) إلى بريدك بنجاح.\n(تفقد الوارد أو مجلد الرسائل غير المرغوب فيها Spam/Junk)'
-          : 'Password reset link sent under (Voltic) store name to your email (Check Inbox/Spam)'
+          ? 'تم إرسال رابط استعادة كلمة المرور باسم متجر (Voltic) إلى بريدك بنجاح.\n📌 تأكيد هام ومؤكد: إذا لم تجد الرسالة في البريد الوارد (Inbox)، ستجدها بالتأكيد في مجلد الرسائل غير المرغوب فيها (Spam / Junk)؛ يرجى فتحها والضغط على "ليس بريداً عشوائياً / Not Spam".'
+          : 'Password reset link sent under official (Voltic) store name.\n📌 Confirmation: If not in your Inbox, check your Spam / Junk folder and click "Not Spam".'
       );
     } catch (err) {
       console.error('Password reset error:', err);
@@ -455,8 +455,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       await sendVolticPasswordResetEmail(currentUser.email);
       showNotification(
         isRtl
-          ? `تم إرسال بريد تجريبي باسم (Voltic) إلى بريدك (${currentUser.email}) بنجاح.`
-          : `Test email sent under (Voltic) name to (${currentUser.email}) successfully.`
+          ? `تم إرسال بريد تجريبي باسم متجر (Voltic) إلى بريدك بنجاح.\n📌 تأكيد هام ومؤكد: إذا لم تجد الرسالة في صندوق الوارد، ستجدها بالتأكيد في مجلد الرسائل غير المرغوب فيها (Spam / Junk)؛ يرجى فتحها والضغط على "ليس بريداً عشوائياً / Not Spam".`
+          : `Test email sent under (Voltic) store name successfully.\n📌 Confirmation: If not in your Inbox, check your Spam / Junk folder and click "Not Spam".`
       );
     } catch (err) {
       console.error('Test email error:', err);
